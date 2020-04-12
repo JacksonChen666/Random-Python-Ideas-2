@@ -1,52 +1,64 @@
-# variables: total time, max clip time, file name, repeat thru list how many times, both dimensions
-# modules: random, moviepy, youtube_dl
-# maybe also make this into a module
-# video length: https://www.reddit.com/r/moviepy/comments/2bsnrq/is_it_possible_to_get_the_length_of_a_video/cj8iqg7
-# ?utm_source=share&utm_medium=web2x
 # video cut: https://stackoverflow.com/questions/37317140/cutting-out-a-portion-of-video-python
-# moviepy doc: https://zulko.github.io/moviepy/ref/VideoClip/VideoClip.html
-# asks for channel URL
-# asks for directory save
 # download from youtube_dl: https://github.com/ytdl-org/youtube-dl/blob/master/README.md#embedding-youtube-dl
-import random, moviepy, youtube_dl
+# /users/jackson/desktop/everything/pending/random cut and concat attempts/videos/
+directory = '/path/to/macos/ or C:\\path\\to\\windows\\'  # double backslash because in programming it means something
+xdim = 1920
+ydim = 1080
+minLength = 0.05
+maxLength = 5
+repeats = 3
 
-total_time = int
-max_clip_time = int
-folder = str
-repeat = int
-fileExtentions = [".mp4", '.mkv', '.webm']
-
-
-def script():
-    global total_time, max_clip_time, folder, repeat
-    total_time = int(input("Total Video Time:\n"))
-    max_clip_time = int(input("Max time for random clips:\n"))
-    folder = input("Directory of clips:\n")
-    repeat = int(input("Repeat thru clips times:\n"))
-    videos = getFiles(folder, fileExtentions)
-    print(videos)
+ext = "*"
 
 
-def module():
-    pass
+def inputting():
+    global directory, xdim, ydim, minLength, maxLength, repeats
+    directory = input("Directory of the videos:\n")
+    repeats = int(input("Repeat thru list how many times:\n"))
+    xdim = int(input("Width of final video:\n"))
+    ydim = int(input("Height of video:\n"))
+    minLength = float(input("Min length of clips:\n"))
+    maxLength = float(input("Max length of clips:\n"))
+    main()
 
 
-def getFiles(directory, extensions):
-    import os
-    file = []
-    files = []
-    for r, d, f in os.walk(directory):
-        for file in f:
-            for i in extensions:
-                if i in file:
-                    file.append(os.path.join(r, file))
+def main():
+    global directory, xdim, ydim, ext, minLength, maxLength, repeats
+    print("Importing...")
+    from multiprocessing import cpu_count
+    import moviepy.editor, os, random, fnmatch
 
-    for f in files:
-        files.append(file)
-    return files
+    outputs = []
+    print("Thread count of export process: {0}".format(str(cpu_count() * 2)))
+    # compile list of videos
+    inputs = [os.path.join(directory, f) for f in os.listdir(directory) if
+              os.path.isfile(os.path.join(directory, f)) and fnmatch.fnmatch(f, ext)]
+    for q in range(repeats):
+        print("\nRepeated {0}/{1}".format(q + 1, repeats))
+        random.shuffle(inputs)
+        for i in inputs:
+            print("\rCutting {0}".format(i), end="", flush=True)
+
+            length = round(random.uniform(minLength, maxLength), 2)
+
+            # import to moviepy
+            clip = moviepy.editor.VideoFileClip(i).resize((xdim, ydim))
+
+            # select a random time point
+            start = round(random.uniform(0, clip.duration - length), 2)
+
+            # cut a subclip
+            out_clip = clip.subclip(start, start + length)
+
+            outputs.append(out_clip)
+
+    # combine clips from different videos
+    print("\nConcatenating...")
+    collage = moviepy.editor.concatenate_videoclips(outputs)
+    print('Writing...\nThread count: ' + str(cpu_count() * 2))
+    collage.write_videofile(directory + 'FINAL.MP4', verbose=False, logger=None, threads=cpu_count() * 2)
+    print("\nDone")
 
 
 if __name__ == '__main__':
-    script()
-else:
-    module()
+    inputting()
