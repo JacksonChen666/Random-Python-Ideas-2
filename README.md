@@ -1,4 +1,4 @@
-#Random Python Ideas 2
+# Random Python Ideas 2
 
 My first one got filled up too much for my system to handle
 
