@@ -26,7 +26,7 @@ def main():
     global directory, xdim, ydim, ext, minLength, maxLength, repeats
     print("Importing...")
     from multiprocessing import cpu_count
-    import moviepy.editor, os, random, fnmatch
+    import moviepy.editor, os, random
 
     outputs = []
     print("Thread count of export process: {0}".format(str(cpu_count() * 2)))
