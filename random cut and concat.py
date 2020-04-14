@@ -26,15 +26,20 @@ def main():
     global directory, xdim, ydim, ext, minLength, maxLength, repeats
     print("Importing...")
     from multiprocessing import cpu_count
-    import moviepy.editor, os, random
+    import moviepy.editor, os, random, fnmatch
 
     outputs = []
-    print("Thread count of export process: {0}".format(str(cpu_count() * 2)))
+    print("Thread count of export process: {0}".format(str(cpu_count() * 2)), end="\n\n")
     # compile list of videos
     inputs = [os.path.join(directory, f) for f in os.listdir(directory) if
               os.path.isfile(os.path.join(directory, f)) and fnmatch.fnmatch(f, ext)]
+    try:
+        inputs.remove(directory + ".DS_Store")
+        inputs.remove(directory + "[Tt]humb.db")
+    except ValueError:
+        pass
     for q in range(repeats):
-        print("\nRepeated {0}/{1}".format(q + 1, repeats))
+        print("\rRepeating {0}/{1}".format(q + 1, repeats))
         random.shuffle(inputs)
         for i in inputs:
             print("\rCutting {0}".format(i), end="", flush=True)
