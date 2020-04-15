@@ -1,7 +1,9 @@
 # my greatest achievement of a gui app with things this is too good
 import tkinter as tk
 from tkinter import filedialog, messagebox
-
+"""
+This program takes a folder of videos, pick a random spot, and then just combine it into a video and done
+"""
 
 class tkWin:
     def __init__(self, window=None):
@@ -51,6 +53,8 @@ class tkWin:
 
         self.chsFldBtn = tk.Button(self.window, text="Choose folder", padx=10, command=self.selectFolder)
 
+        self.installBtn = tk.Button(self.window,text="Install required libraries",padx=10,command=self.installLibraries)
+
         self.stopBtn = tk.Button(self.window, text="Stop and Close", padx=10, command=self.on_closing)
 
         # Grid
@@ -79,7 +83,9 @@ class tkWin:
 
         self.chsFldBtn.grid(row=8, column=0, pady=5, padx=5, columnspan=2, sticky="nesw")
 
-        self.stopBtn.grid(row=9, column=0, pady=5, padx=5, columnspan=2, sticky="nesw")
+        self.installBtn.grid(row=9,column=0,pady=5,padx=5,columnspan=2,sticky="nesw")
+
+        self.stopBtn.grid(row=10, column=0, pady=5, padx=5, columnspan=2, sticky="nesw")
 
         # Be on top of everything
         self.window.lift()
@@ -100,6 +106,13 @@ class tkWin:
     def selectFolder(self):
         global t
         import threading
+        try:  # Validation
+            if self.folder_selected == '' or not self.folder_selected:
+                pass
+            else:
+                return False
+        except AttributeError:
+            pass
         self.folder_selected = filedialog.askdirectory(title="Directory of the videos")
         if self.folder_selected == '':
             return False
@@ -116,6 +129,16 @@ class tkWin:
         # t.join() # don't join, or the window will freeze
         # main(self.folder_selected + "/", self.xdim.get(), self.ydim.get(), self.minLen.get(), self.maxLen.get(),
         #      self.repeats.get(),self.varPreset.get())
+
+    def installLibraries(self):
+        from subprocess import run
+        try:
+            run("pip install moviepy", shell=True, check=True)
+        except:
+            run("pip3 install moviepy", shell=True, check=True)
+        finally:
+            run("pip3 install moviepy", shell=True, check=True)
+        self.installBtn.destroy()
 
     def changeButtons(self, ED):
         self.quality.config(state=ED)
@@ -137,7 +160,6 @@ class tkWin:
                 print("\nThread still running, some files may not be properly finished using.")
             else:
                 print("\nThread not running.")
-            raise KeyboardInterrupt
 
     def qualityChange(self, i, d, k):
         var = self.varQuality.get()
@@ -199,28 +221,25 @@ class tkWin:
                     ('.mp4', '.mkv', '.webm', '.mov', '.flv', '.avi', '.m4a', '.m4v', '.f4v', '.f4a', '.m4b')):
                 inputs.append(a)
 
-        # print(inputs)
-
         for q in range(int(repeats)):
+            self.installBtn.destroy()
             random.shuffle(inputs)
             self.statusUpdate("Repeating {0}/{1} times and Cutting...".format(q + 1, int(repeats)))
             for i in inputs:
                 print("\rRepeating {0}/{1} times and Cutting {2}".format(q + 1, int(repeats), i), end="", flush=True)
 
-                length = round(random.uniform(float(minLength), float(maxLength)), 2)
-
                 # import to moviepy
                 clip = moviepy.editor.VideoFileClip(i).resize((int(xdim), int(ydim)))
 
-                # select a random time point
+                # timing
+                length = round(random.uniform(float(minLength), float(maxLength)), 2)
                 start = round(random.uniform(0, clip.duration - length), 2)
 
-                # cut a subclip
+                # cut a subclip and store it later
                 outputs.append(clip.subclip(start, start + length))
 
                 # bye
                 clip.close()
-                del clip
 
         # combine clips from different videos
         print("\nConcatenating...")
@@ -229,11 +248,18 @@ class tkWin:
         self.statusUpdate("Writing... Thread count: {0}.\nKilling the GUI may not stop the writing process".format(str(
             cpu_count() * 2)))
         collage = moviepy.editor.concatenate_videoclips(outputs)
-        collage.write_videofile(directory + '/FINAL.MP4', threads=cpu_count() * 2, preset=ffmpeg_preset)
-        print("Done, cleanup")
-        self.statusUpdate("Done, cleanup")
+        try:
+            collage.write_videofile(directory + '/FINAL.MP4', threads=cpu_count() * 2, preset=ffmpeg_preset)
+        except AttributeError:
+            self.changeButtons("normal")
+            self.statusUpdate("An error occurred")
+            collage.close()
+            raise
+        print("Done")
+        self.statusUpdate("Done")
         collage.close()
         self.changeButtons("normal")
+        self.folder_selected = ""
         # Calls function that plays audio that it is done
         return outputs
 
