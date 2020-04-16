@@ -200,6 +200,7 @@ class tkWin:
 
     def processing(self, directory, xdim, ydim, minLength, maxLength, repeats, ffmpeg_preset):  # Where the real magic
         # happens
+        self.installBtn.destroy() # i've warned you, that you have installed it!!
         self.changeButtons("disabled")
         print("Importing...")
         self.statusUpdate("Importing...")
@@ -222,7 +223,6 @@ class tkWin:
                 inputs.append(a)
 
         for q in range(int(repeats)):
-            self.installBtn.destroy()
             random.shuffle(inputs)
             self.statusUpdate("Repeating {0}/{1} times and Cutting...".format(q + 1, int(repeats)))
             for i in inputs:
