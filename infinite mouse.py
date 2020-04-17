@@ -28,11 +28,16 @@ COMBINATIONS = [
     {keyboard.Key.alt, keyboard.Key.esc}
 ]
 
+# pixels away from side
+awayFrom = 3
+
 # The currently active modifiers
 current = set()
 
 tnow = datetime.datetime.now()
 tcounter = 0
+
+# screen size to check for edge
 screen_width = tk.Tk().winfo_screenwidth()
 screen_height = tk.Tk().winfo_screenheight()
 
@@ -40,17 +45,17 @@ screen_height = tk.Tk().winfo_screenheight()
 def on_move(x, y):
     # print("{} {}".format(x, y))
     if allowed:  # well that happened
-        if -1.0 <= x <= 1:
-            mouse.Controller().move(screen_width - 5, 0)
+        if -0.5 <= x <= 0.5:
+            mouse.Controller().move(screen_width - awayFrom, 0)
             print("->", end=" ")
-        elif screen_width - 1 <= x < screen_width + 1:
-            mouse.Controller().move(-screen_width - 5, 0)
+        elif screen_width - 0.5 <= x < screen_width + 0.5:
+            mouse.Controller().move(-screen_width - awayFrom, 0)
             print("<-", end=" ")
-        elif -1.0 <= y <= 1:
-            mouse.Controller().move(0, screen_height - 5)
+        elif -0.5 <= y <= 0.5:
+            mouse.Controller().move(0, screen_height - awayFrom)
             print("^", end=" ")
-        elif screen_height + 1 > y >= screen_height - 1:
-            mouse.Controller().move(0, -screen_height - 5)
+        elif screen_height + 0.5 > y >= screen_height - 0.5:
+            mouse.Controller().move(0, -screen_height - awayFrom)
             print("V", end=" ")
 
 
@@ -60,7 +65,7 @@ def on_press(key):
 
 def on_release(key):
     global allowed, current
-    if key == Key.cmd_r:
+    if key == Key.ctrl_r or key == Key.cmd_r:
         allowed = not allowed
         if allowed:
             print("\nSoftware control gained")
@@ -83,29 +88,16 @@ def on_release(key):
 
 
 def mac_on_move(x, y):  # mac and mainly for myself actually
-    # print("{} {}".format(x, y))
-    if allowed:  # well that happened
-        if -0.5 <= x <= 0.5:
-            mouse.Controller().move(screen_width - 5, 0)
-            print("->", end=" ")
-        elif screen_width - 0.5 <= x < screen_width + 0.5:
-            mouse.Controller().move(-screen_width - 5, 0)
-            print("<-", end=" ")
-        elif -0.5 <= y <= 0.5:
-            mouse.Controller().move(0, screen_height - 5)
-            print("^", end=" ")
-        elif screen_height + 0.5 > y >= screen_height - 0.5:
-            mouse.Controller().move(0, -screen_height - 5)
-            print("V", end=" ")
+    on_move(x, y)
 
 
 def mac_on_press(key):
-    pass
+    on_press(key)
 
 
 def mac_on_release(key):
     global allowed, current
-    if key == Key.ctrl_r or key == Key.cmd_r:
+    if key == Key.cmd_r:
         allowed = not allowed
         if allowed:
             print("\nSoftware control gained")
@@ -131,29 +123,29 @@ def win_on_move():  # windows version
     # print("{} {}".format(x, y))
     if allowed:  # well that happened
         if -1.0 <= x <= 1:
-            mouse.Controller().move(screen_width - 5, 0)
+            mouse.Controller().move(screen_width - awayFrom, 0)
             print("->", end=" ")
         elif screen_width - 1 <= x < screen_width + 1:
-            mouse.Controller().move(-screen_width - 5, 0)
+            mouse.Controller().move(-screen_width - awayFrom, 0)
             print("<-", end=" ")
         elif -1.0 <= y <= 1:
-            mouse.Controller().move(0, screen_height - 5)
+            mouse.Controller().move(0, screen_height - awayFrom)
             print("^", end=" ")
         elif screen_height + 1 > y >= screen_height - 1:
-            mouse.Controller().move(0, -screen_height - 5)
+            mouse.Controller().move(0, -screen_height - awayFrom)
             print("V", end=" ")
 
 
-def win_on_press():
-    pass
+def win_on_press(key):
+    on_press(key)
 
 
-def win_on_release():
+def win_on_release(key):
     global allowed, current
-    if key == Key.cmd_r:
+    if key == Key.ctrl_r:
         allowed = not allowed
         if allowed:
-            print("\nSoftware control gained")
+            print("Software control gained")
         else:
             print("\nSoftware control lost")
 
@@ -172,46 +164,28 @@ def win_on_release():
                 current = set()
 
 
-def linux_on_move():  # linux version
-    pass
+def linux_on_move(x, y):  # linux version
+    on_move(x, y)
 
 
-def linux_on_press():
-    pass
+def linux_on_press(key):
+    on_press(key)
 
 
-def linux_on_release():
-    pass
+def linux_on_release(key):
+    on_release(key)
 
 
 def mac_ver():  # mainly designed for myself
-    # mac_on_move()
-    # mac_on_press()
-    # mac_on_release()
-    listeners = keyboard.Listener(on_release=mac_on_release, on_press=mac_on_press)
-    listeners.start()
-    with mouse.Listener(on_move=mac_on_move) as listener:
-        listener.join()
+    pass
 
 
 def windows_ver():  # windows
-    # windows_on_move()
-    # windows_on_press()
-    # windows_on_release()
-    listeners = keyboard.Listener(on_release=windows_on_release, on_press=windows_on_press)
-    listeners.start()
-    with mouse.Listener(on_move=windows_on_move) as listener:
-        listener.join()
+    pass
 
 
 def linux_ver():  # linux
-    # linux_on_move()
-    # linux_on_press()
-    # linux_on_release()
-    listeners = keyboard.Listener(on_release=linux_on_release, on_press=linux_on_press)
-    listeners.start()
-    with mouse.Listener(on_move=linux_on_move) as listener:
-        listener.join()
+    pass
 
 
 if __name__ == '__main__':
@@ -219,21 +193,30 @@ if __name__ == '__main__':
     allowed = True
     text = "Initialized\nUse right control/right command to pause/resume\nQuit combination:\nCtrl+Esc then Alt+Esc"
     if system() == "Darwin":
-        print("Mac, Stable")
-        print(text)
-        mac_ver()
+        print("Mac, Stable\n{0}".format(text))
+        listeners = keyboard.Listener(on_release=mac_on_release, on_press=mac_on_press)
+        listeners.start()
+        with mouse.Listener(on_move=mac_on_move) as listener:
+            listener.join()
+            pass
     elif system() == "Windows":
-        print("Windows\nThis is unstable and may slow down your mouse harshly")
-        print(text)
-        windows_ver()
+        print("Windows\nThis is unstable and may slow down your mouse harshly\n{0}".format(text))
+        listeners = keyboard.Listener(on_release=windows_on_release, on_press=windows_on_press)
+        listeners.start()
+        with mouse.Listener(on_move=windows_on_move) as listener:
+            listener.join()
     elif system() == "Linux":
-        print("Linux\nUntested, unstable, and unfinished. It will not work yet")
-        print(text)
-        linux_ver()
+        print("Linux\nUntested, unstable, and unfinished. It will not work yet\n{0}".format(text))
+        listeners = keyboard.Listener(on_release=linux_on_release, on_press=linux_on_press)
+        listeners.start()
+        with mouse.Listener(on_move=linux_on_move) as listener:
+            listener.join()
     else:
-        print("System unknown, this might not work properly")
-        print(text)
-
+        print("System unknown, this might not work properly. Using default\n{0}".format(text))
+        listeners = keyboard.Listener(on_release=on_release, on_press=on_press)
+        listeners.start()
+        with mouse.Listener(on_move=on_move) as listener:
+            listener.join()
     # listeners = keyboard.Listener(on_release=on_release, on_press=on_press)
     # listeners.start()
     # with mouse.Listener(on_move=on_move) as listener:
