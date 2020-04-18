@@ -1,5 +1,6 @@
 import math
 import tkinter as tk
+from tkinter import messagebox
 
 
 class Calculations:
@@ -106,9 +107,16 @@ class GUI:
         self.choice.trace("w", self.choiceCheck)
         self.choiceCheck()
         self.numEnt.bind("<KeyRelease>", self.key_release)
+        self.window.bind_all("<KeyRelease>", self.confirm_quit)
 
         # start
         self.window.mainloop()
+
+    def confirm_quit(self, event):
+        if event.char == "":
+            self.window.lift()
+            if messagebox.askokcancel("Quit", "Do you want to quit?"):
+                self.window.quit()
 
     def key_release(self, event):
         global allowSave
@@ -118,6 +126,7 @@ class GUI:
         if allowSave:
             if event.char == " ":
                 self.saveNum()
+        print("{0}".format(event.char), end="")
 
     def setList(self):
         global numListSaved
