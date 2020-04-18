@@ -1,4 +1,3 @@
-# does math as a gui like mean and MAD
 import math
 import tkinter as tk
 
