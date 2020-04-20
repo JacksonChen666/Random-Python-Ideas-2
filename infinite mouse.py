@@ -10,6 +10,9 @@ try:
 except ImportError:
     from subprocess import run
 
+    print("If you have an antivirus, the library installation process maybe blocked or thrown sandbox to confirm it "
+          "does not do any harm. If the installation process is blocked, please manually install the following "
+          "libraries: pynput")
     try:
         print("Attempting to install library with pip...")
         run("pip install pynput", shell=True, check=True)
@@ -142,6 +145,9 @@ def win_on_press(key):
 
 def win_on_release(key):
     global allowed, current
+    COMBINATIONS = [
+        {keyboard.Key.shift, keyboard.Key.esc}
+    ]
     if key == Key.ctrl_r:
         allowed = not allowed
         if allowed:
@@ -191,16 +197,16 @@ def linux_ver():  # linux
 if __name__ == '__main__':
     s = 1
     allowed = True
-    text = "Initialized\nUse right control/right command to pause/resume\nQuit combination:\nCtrl+Esc then Alt+Esc"
+    text = "Initialized\nUse right control/right command to pause/resume\nQuit combination:"
     if system() == "Darwin":
-        print("Mac, Stable\n{0}".format(text))
+        print("Mac, Stable\n{0}\nCtrl+Esc then Alt+Esc".format(text))
         listeners = keyboard.Listener(on_release=mac_on_release, on_press=mac_on_press)
         listeners.start()
         with mouse.Listener(on_move=mac_on_move) as listener:
             listener.join()
             pass
     elif system() == "Windows":
-        print("Windows\nThis is unstable and may slow down your mouse harshly\n{0}".format(text))
+        print("Windows\nThis is unstable and may slow down your mouse harshly\n{0}\nShift+Esc".format(text))
         listeners = keyboard.Listener(on_release=windows_on_release, on_press=windows_on_press)
         listeners.start()
         with mouse.Listener(on_move=windows_on_move) as listener:
