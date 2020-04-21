@@ -18,6 +18,12 @@ class Main():
         self.moreLabels = tk.Label(self.root, text="some kind of very long text")
         self.moreEntries = tk.Entry(self.root, textvariable=self.notTheSame)
         self.buttons = tk.Button(self.root, textvariable=self.buttonText, command=self.idot)
+
+        self.menuBar = tk.Menu(self.root)
+        self.idot = tk.Menu(self.menuBar, tearoff=0)
+        self.idot.add_command(label="idot buton", command=self.idot)
+        self.menuBar.add_cascade(label="idot", menu=self.idot)
+        self.root.config(menu=self.menuBar)
         # setup
         self.labels.grid(row=0, column=0, sticky="e")
         self.entries.grid(row=0, column=1)

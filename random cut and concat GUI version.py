@@ -1,9 +1,11 @@
 # my greatest achievement of a gui app with things this is too good
 import tkinter as tk
 from tkinter import filedialog, messagebox
+
 """
 This program takes a folder of videos, pick a random spot, and then just combine it into a video and done
 """
+
 
 class tkWin:
     def __init__(self, window=None):
@@ -53,7 +55,8 @@ class tkWin:
 
         self.chsFldBtn = tk.Button(self.window, text="Choose folder", padx=10, command=self.selectFolder)
 
-        self.installBtn = tk.Button(self.window,text="Install required libraries",padx=10,command=self.installLibraries)
+        self.installBtn = tk.Button(self.window, text="Install required libraries", padx=10,
+                                    command=self.installLibraries)
 
         self.stopBtn = tk.Button(self.window, text="Stop and Close", padx=10, command=self.on_closing)
 
@@ -65,25 +68,25 @@ class tkWin:
         self.quality.grid(row=1, column=1, pady=5, sticky="nesw")
 
         self.xdimLbl.grid(row=2, column=0, pady=5, sticky="e")
-        self.xdim.grid(row=2, column=1, pady=5,sticky="nesw")
+        self.xdim.grid(row=2, column=1, pady=5, sticky="nesw")
 
         self.ydimLbl.grid(row=3, column=0, pady=5, sticky="e")
-        self.ydim.grid(row=3, column=1, pady=5,sticky="nesw")
+        self.ydim.grid(row=3, column=1, pady=5, sticky="nesw")
 
         self.minLenLbl.grid(row=4, column=0, pady=5, sticky="e")
-        self.minLen.grid(row=4, column=1, pady=5,sticky="nesw")
+        self.minLen.grid(row=4, column=1, pady=5, sticky="nesw")
 
         self.maxLenLbl.grid(row=5, column=0, pady=5, sticky="e")
-        self.maxLen.grid(row=5, column=1, pady=5,sticky="nesw")
+        self.maxLen.grid(row=5, column=1, pady=5, sticky="nesw")
 
         self.repeatsLbl.grid(row=6, column=0, pady=5, sticky="e")
-        self.repeats.grid(row=6, column=1, pady=5,sticky="nesw")
+        self.repeats.grid(row=6, column=1, pady=5, sticky="nesw")
 
         self.status.grid(row=7, column=0, columnspan=2, pady=5)
 
         self.chsFldBtn.grid(row=8, column=0, pady=5, padx=5, columnspan=2, sticky="nesw")
 
-        self.installBtn.grid(row=9,column=0,pady=5,padx=5,columnspan=2,sticky="nesw")
+        self.installBtn.grid(row=9, column=0, pady=5, padx=5, columnspan=2, sticky="nesw")
 
         self.stopBtn.grid(row=10, column=0, pady=5, padx=5, columnspan=2, sticky="nesw")
 
@@ -200,7 +203,8 @@ class tkWin:
 
     def processing(self, directory, xdim, ydim, minLength, maxLength, repeats, ffmpeg_preset):  # Where the real magic
         # happens
-        self.installBtn.destroy() # i've warned you, that you have installed it!!
+        global collages
+        self.installBtn.destroy()  # i've warned you, that you have installed it!!
         self.changeButtons("disabled")
         print("Importing...")
         self.statusUpdate("Importing...")
@@ -214,13 +218,14 @@ class tkWin:
         # inputs = [os.path.join(directory, f) for f in os.listdir(directory) if
         #           os.path.isfile(os.path.join(directory, f)) and fnmatch.fnmatch(f, ext)]
 
-        inputs = []
+        inputs = [os.path.join(directory, f) for f in os.listdir(directory) if os.path.join(directory, f).endswith(
+            ('.mp4', '.mkv', '.webm', '.mov', '.flv', '.avi', '.m4a', '.m4v', '.f4v', '.f4a', '.m4b'))]
+        concatenated = []
 
-        for f in os.listdir(directory):
-            a = os.path.join(directory, f)
-            if a.endswith(
-                    ('.mp4', '.mkv', '.webm', '.mov', '.flv', '.avi', '.m4a', '.m4v', '.f4v', '.f4a', '.m4b')):
-                inputs.append(a)
+        # for f in os.listdir(directory):
+        #     if os.path.join(directory, f).endswith(
+        #             ('.mp4', '.mkv', '.webm', '.mov', '.flv', '.avi', '.m4a', '.m4v', '.f4v', '.f4a', '.m4b')):
+        #         inputs.append(os.path.join(directory, f))
 
         for q in range(int(repeats)):
             random.shuffle(inputs)
@@ -240,14 +245,17 @@ class tkWin:
 
                 # bye
                 clip.close()
-
+            collages = moviepy.editor.concatenate_videoclips(outputs)
+            concatenated.append(collages)
+            collages.close()
+            outputs.clear()
         # combine clips from different videos
         print("\nConcatenating...")
         self.statusUpdate("Concatenating...")
         print('Writing... Thread count: {0}'.format(str(cpu_count() * 2)))
         self.statusUpdate("Writing... Thread count: {0}.\nKilling the GUI may not stop the writing process".format(str(
             cpu_count() * 2)))
-        collage = moviepy.editor.concatenate_videoclips(outputs)
+        collage = moviepy.editor.concatenate_videoclips(collages)
         try:
             collage.write_videofile(directory + '/FINAL.MP4', threads=cpu_count() * 2, preset=ffmpeg_preset)
         except AttributeError:

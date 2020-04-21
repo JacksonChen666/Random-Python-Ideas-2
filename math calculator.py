@@ -1,25 +1,42 @@
 import math
+import statistics
 import tkinter as tk
-from tkinter import messagebox
 
 
 class Calculations:
     @staticmethod
+    def addition(num, num2):
+        return float(num) + float(num2)
+
+    @staticmethod
+    def subtraction(num, num2):
+        return float(num) - float(num2)
+
+    @staticmethod
+    def multiplication(num, num2):
+        return float(num) * float(num2)
+
+    @staticmethod
+    def division(num, num2):
+        return float(num) / float(num2)
+
+    @staticmethod
+    def remainder(num, num2):
+        return math.remainder(float(num), float(num2))
+
+    @staticmethod
     def mean(numList):
-        tempNum = 0.0
-        for num in numList:
-            tempNum = float(tempNum) + float(num)
-        return float(tempNum) / float(len(numList))
+        return float(statistics.mean(numList))
 
     def MAD(self, numList):
-        tempMean = float(self.mean(numList))
+        tempMean = float(self.mean(numList.sort))  # get mean of list
         tempList = []
         for num in numList:
-            if num > tempMean:
+            if num > tempMean:  # subtract the mean and then number or the other way if its bigger
                 tempList.append(float(num - tempMean))
             else:
                 tempList.append(float(tempMean - num))
-        return self.mean(tempList)
+        return self.mean(tempList.sort())  # get the mean
 
     @staticmethod
     def power(num, power):
@@ -41,6 +58,35 @@ class Calculations:
     def tangent(num):
         return math.tan(float(num))
 
+    @staticmethod
+    def median(numList):
+        return float(statistics.median(numList))
+
+    def IQR(self, numList):
+        mainMedian = float(self.median(numList))  # get the median of whole list
+        lowerList = []  # save the lower and higher part of the list into a new lower and higher part of a list
+        # separately
+        higherList = []
+        for i in numList:
+            if i < mainMedian:
+                lowerList.append(i)
+            elif i > mainMedian:
+                higherList.append(i)
+
+        lowerMedian = float(self.median(lowerList))  # get the median both the lower and higher part
+        higherMedian = float(self.median(higherList))
+        if lowerMedian > higherMedian:  # subtract q1 to q3 or q3 to q1 (one must be higher than the other)
+            return lowerMedian - higherMedian
+        elif lowerMedian < higherMedian:
+            return higherMedian - lowerMedian
+
+    @staticmethod
+    def rounding(num, mode):
+        if mode.lower() == "up":
+            return math.ceil(num)
+        elif mode.lower() == "down":
+            return math.floor(num)
+
 
 class GUI:
     def __init__(self):
@@ -61,9 +107,12 @@ class GUI:
         self.varNumList = tk.Variable(self.window)
 
         # stuff
+        choices = ['Addition', 'Subtraction', 'Multiplication', 'Division', 'Remainder', 'Cosine', 'IQR', 'MAD',
+                   'Mean', 'Median', 'Power', 'Sine', 'Square Root', 'Tangent']
+        choices.sort()
+        print(*choices)
         self.calcTypeLbl = tk.Label(self.window, text="Type of calculation:")
-        self.calcType = tk.OptionMenu(self.window, self.choice, "Cosine", "Sine", "Tangent", "Mean", "MAD", "Power",
-                                      "Square Root")
+        self.calcType = tk.OptionMenu(self.window, self.choice, *choices)
 
         self.numLbl = tk.Label(self.window, text="Number 1:")
         self.numEnt = tk.Entry(self.window, textvariable=self.numVar)
@@ -84,6 +133,8 @@ class GUI:
         self.saveNumBtn = tk.Button(self.window, text="Save num", command=self.saveNum)
         self.calcBtn = tk.Button(self.window, text="Calculate", command=self.calculate)
 
+        self.clearBtn = tk.Button(self.window, text="Clear List", command=self.clearList)
+
         # grid
         self.calcTypeLbl.grid(row=0, column=0, pady=5, sticky="e")
         self.calcType.grid(row=0, column=1, padx=5, pady=5, sticky="nesw")
@@ -103,26 +154,41 @@ class GUI:
         self.saveNumBtn.grid(row=5, column=0, padx=5, pady=5, sticky="nesw")
         self.calcBtn.grid(row=5, column=1, padx=5, pady=5, sticky="nesw")
 
+        self.clearBtn.grid(row=6, column=0, padx=5, pady=5, sticky="nesw", columnspan=2)
+
         # checks and stuff
         self.choice.trace("w", self.choiceCheck)
         self.choiceCheck()
         self.numEnt.bind("<KeyRelease>", self.key_release)
-        self.window.bind_all("<KeyRelease>", self.confirm_quit)
+
+        # menu bar wth
+        self.menubar = tk.Menu(self.window)
+
+        self.calcs = tk.Menu(self.menubar, tearoff=0)
+        self.calcs.add_command(label="Calculate", command=self.calculate)
+        self.calcs.add_separator()
+
+        self.calcs.add_command(label="Save Number", command=self.saveNum)
+        self.calcs.add_command(label="Clear List", command=self.clearList)
+
+        self.calcs.entryconfig(2, state="disabled")
+        self.calcs.entryconfig(3, state="disabled")
+
+        self.menubar.add_cascade(label="Math", menu=self.calcs)
+
+        self.window.config(menu=self.menubar)
 
         # start
         self.window.mainloop()
-
-    def confirm_quit(self, event):
-        if event.char == "":
-            self.window.lift()
-            if messagebox.askokcancel("Quit", "Do you want to quit?"):
-                self.window.quit()
 
     def key_release(self, event):
         global allowSave
         # print("Key: {0}".format(event.char))
         if event.char == "\n" or event.char == "\r":
+            print("\n", end="")
             self.calculate()
+        elif event.char == "":
+            self.clearList()
         if allowSave:
             if event.char == " ":
                 self.saveNum()
@@ -132,86 +198,63 @@ class GUI:
         global numListSaved
         self.varNumList.set(numListSaved)
 
+    def clearList(self):
+        global numListSaved
+        if allowSave:
+            numListSaved.clear()
+            self.varNumList.set(numListSaved)
+
     def choiceCheck(self, i=None, d=None, c=None):
         global numListSaved, allowSave
         choice = self.choice.get()
+        numListSaved.clear()
         self.setList()
-        if choice == "Mean":
-            self.numLbl.config(text="Number:")
-            self.numEnt2.config(state="disable")
-            self.numLbl2.config(text="Save instead")
-            self.finalLbl.config(text="Answer (Mean):")
-            self.saveNumBtn.config(state="normal")
-            allowSave = True
-            self.numVar2.set("")
-        elif choice == "MAD":
-            self.numLbl.config(text="Number:")
-            self.numEnt2.config(state="disable")
-            self.numLbl2.config(text="Save instead")
-            self.finalLbl.config(text="Answer (MAD):")
-            self.saveNumBtn.config(state="normal")
-            allowSave = True
-            self.numVar2.set("")
-        elif choice == "Power":
-            self.numLbl.config(text="Number:")
+
+        if choice == "Mean" or choice == "MAD" or choice == "Median" or choice == "IQR":
+            self.extraNumsState(choice, True, False)
+        elif choice == "Power" or choice == "Addition" or choice == "Subtraction" or choice == "Multiplication" or \
+                choice == "Division" or choice == "Remainder":
+            self.extraNumsState(choice, False, True)
+        elif choice == "Square Root" or choice == "Cosine" or choice == "Sine" or choice == "Tangent":
+            self.extraNumsState(choice, False, False)
+
+    def extraNumsState(self, answerType, saveState, extraNums, num2Lbl="Number 2"):
+        global allowSave
+        if extraNums:
             self.numEnt2.config(state="normal")
-            self.numLbl2.config(text="To the power of:")
-            self.finalLbl.config(text="Answer (Power):")
-            self.saveNumBtn.config(state="disable")
-            allowSave = False
-            numListSaved.clear()
-            self.setList()
-        elif choice == "Square Root":
-            self.numLbl.config(text="Number 1:")
+            self.numLbl2.config(text="{0}:".format(num2Lbl))
+            self.finalLbl.config(text="Answer ({0}):".format(answerType))
+            self.changeSaveState(saveState)
+        elif not extraNums:
             self.numEnt2.config(state="disabled")
             self.numLbl2.config(text="No extra nums")
-            self.finalLbl.config(text="Answer (Square Root):")
-            self.saveNumBtn.config(state="disable")
-            allowSave = False
-            numListSaved.clear()
-            self.setList()
+            self.finalLbl.config(text="Answer ({0}):".format(answerType))
             self.numVar2.set("")
-        elif choice == "Cosine":
-            self.numLbl.config(text="Number:")
-            self.numEnt2.config(state="disabled")
-            self.numLbl2.config(text="No extra nums")
-            self.finalLbl.config(text="Answer (Cosine):")
+            self.changeSaveState(saveState)
+
+    def changeSaveState(self, allowSaving):
+        global allowSave
+        if allowSaving:
+            self.saveNumBtn.config(state="normal")
+            allowSave = True
+        elif not allowSaving:
             self.saveNumBtn.config(state="disable")
+            self.clearList()
             allowSave = False
-            numListSaved.clear()
-            self.setList()
-            self.numVar2.set("")
-        elif choice == "Sine":
-            self.numLbl.config(text="Number:")
-            self.numEnt2.config(state="disabled")
-            self.numLbl2.config(text="No extra nums")
-            self.finalLbl.config(text="Answer (Sine):")
-            self.saveNumBtn.config(state="disable")
-            allowSave = False
-            numListSaved.clear()
-            self.setList()
-            self.numVar2.set("")
-        elif choice == "Tangent":
-            self.numLbl.config(text="Number:")
-            self.numEnt2.config(state="disabled")
-            self.numLbl2.config(text="No extra nums")
-            self.finalLbl.config(text="Answer (Tangent):")
-            self.saveNumBtn.config(state="disable")
-            allowSave = False
-            numListSaved.clear()
-            self.setList()
-            self.numVar2.set("")
 
     def saveNum(self):
         global numListSaved
-        try:
-            numListSaved.append(float(self.numEnt.get()))
-        except ValueError:
+        if allowSave:
+            try:
+                numListSaved.append(float(self.numEnt.get()))
+            except ValueError:
+                self.numVar.set("")
+                return False
             self.numVar.set("")
+            self.setList()
+            return True
+        else:
             return False
-        self.numVar.set("")
-        self.setList()
-        return True
 
     def calculate(self, numList=None):
         self.setList()
@@ -240,6 +283,24 @@ class GUI:
             self.answer.set(str(Calculations().cosine(self.numEnt.get())))
         elif choice == "Tangent":
             self.answer.set(str(Calculations().tangent(self.numEnt.get())))
+        elif choice == "Median":
+            if self.numEnt.get() != "":
+                self.saveNum()
+            self.answer.set(str(Calculations().median(numList)))
+        elif choice == "IQR":
+            if self.numEnt.get() != "":
+                self.saveNum()
+            self.answer.set(str(Calculations().IQR(numList)))
+        elif choice == "Addition":
+            self.answer.set(str(Calculations().addition(self.numEnt.get(), self.numEnt2.get())))
+        elif choice == "Subtraction":
+            self.answer.set(str(Calculations().subtraction(self.numEnt.get(), self.numEnt2.get())))
+        elif choice == "Multiplication":
+            self.answer.set(str(Calculations().multiplication(self.numEnt.get(), self.numEnt2.get())))
+        elif choice == "Division":
+            self.answer.set(str(Calculations().division(self.numEnt.get(), self.numEnt2.get())))
+        elif choice == "Remainder":
+            self.answer.set(str(Calculations().remainder(self.numEnt.get(), self.numEnt2.get())))
         numListSaved.clear()
 
 
