@@ -1,68 +1,151 @@
+"""
+Math except the software does it and not you
+"""
 import math
 import statistics
 import tkinter as tk
 
 
-class Calculations:
+class Math:
+    """
+    Where math happens
+    """
     @staticmethod
     def addition(num, num2):
+        """
+        Addition.
+        :param num: Number to add to number
+        :param num2: Number to add to other number
+        :return: Number added together
+        """
         return float(num) + float(num2)
 
     @staticmethod
     def subtraction(num, num2):
+        """
+        Subtraction.
+        :param num: Number subtracted by number 2
+        :param num2: Number 2
+        :return: Number
+        """
         return float(num) - float(num2)
 
     @staticmethod
     def multiplication(num, num2):
+        """
+        Multiplication
+        :param num: Number multiplied by Number 2
+        :param num2: Number 2
+        :return: Number
+        """
         return float(num) * float(num2)
 
     @staticmethod
     def division(num, num2):
+        """
+        Divide
+        :param num: Number Divided by Number 2
+        :param num2: Number 2
+        :return: Number
+        """
         return float(num) / float(num2)
 
     @staticmethod
     def remainder(num, num2):
+        """
+        Remainder from division
+        :param num:
+        :param num2:
+        :return: Number
+        """
         return math.remainder(float(num), float(num2))
 
     @staticmethod
     def mean(numList):
+        """
+        Add all and divide by length of list
+        :param numList: Number List
+        :return: Number
+        """
         return float(statistics.mean(numList))
 
     def MAD(self, numList):
-        tempMean = float(self.mean(numList.sort))  # get mean of list
+        """
+        MAD
+        :param numList: Number list
+        :return: Number
+        """
+        tempMean = float(self.mean(numList))  # get mean of list
         tempList = []
         for num in numList:
             if num > tempMean:  # subtract the mean and then number or the other way if its bigger
                 tempList.append(float(num - tempMean))
-            else:
+            elif num < tempMean:
                 tempList.append(float(tempMean - num))
-        return self.mean(tempList.sort())  # get the mean
+        tempList.sort()
+        return self.mean(tempList)  # get the mean
 
     @staticmethod
     def power(num, power):
+        """
+        To the power of
+        :param num: Number to the power of number power
+        :param power: Number power
+        :return: Number
+        """
         return math.pow(float(num), float(power))
 
     @staticmethod
     def square_root(num):
+        """
+        Square Root
+        :param num: Number to square root
+        :return: Number
+        """
         return math.sqrt(float(num))
 
     @staticmethod
     def cosine(num):
+        """
+        Cosine
+        :param num: Number to cosine
+        :return: Number
+        """
         return math.cos(float(num))
 
     @staticmethod
     def sine(num):
+        """
+        Sine
+        :param num: Number to sine
+        :return: Number
+        """
         return math.sin(float(num))
 
     @staticmethod
     def tangent(num):
+        """
+        Tangent
+        :param num: Number
+        :return: Number
+        """
         return math.tan(float(num))
 
     @staticmethod
     def median(numList):
+        """
+        Median
+        :param numList: Number List
+        :return: Number
+        """
         return float(statistics.median(numList))
 
     def IQR(self, numList):
+        """
+        IQR
+        :param numList: Number List
+        :return: Number
+        """
         mainMedian = float(self.median(numList))  # get the median of whole list
         lowerList = []  # save the lower and higher part of the list into a new lower and higher part of a list
         # separately
@@ -80,16 +163,12 @@ class Calculations:
         elif lowerMedian < higherMedian:
             return higherMedian - lowerMedian
 
-    @staticmethod
-    def rounding(num, mode):
-        if mode.lower() == "up":
-            return math.ceil(num)
-        elif mode.lower() == "down":
-            return math.floor(num)
-
 
 class GUI:
     def __init__(self):
+        """
+        The GUI mainly for people who doesn't know how to
+        """
         global numListSaved, allowSave
         super().__init__()
         numListSaved = []
@@ -182,8 +261,12 @@ class GUI:
         self.window.mainloop()
 
     def key_release(self, event):
+        """
+        When you release a key
+        :param event: To detect which key
+        :return:
+        """
         global allowSave
-        # print("Key: {0}".format(event.char))
         if event.char == "\n" or event.char == "\r":
             print("\n", end="")
             self.calculate()
@@ -195,20 +278,36 @@ class GUI:
         print("{0}".format(event.char), end="")
 
     def setList(self):
+        """
+        Change list on GUI
+        :return:
+        """
         global numListSaved
         self.varNumList.set(numListSaved)
 
     def clearList(self):
+        """
+        Clear list on GUI
+        :return:
+        """
         global numListSaved
         if allowSave:
             numListSaved.clear()
             self.varNumList.set(numListSaved)
 
     def choiceCheck(self, i=None, d=None, c=None):
+        """
+        Check choices and stuff
+        :param i: I
+        :param d: DON'T
+        :param c: CARE
+        :return:
+        """
         global numListSaved, allowSave
         choice = self.choice.get()
         numListSaved.clear()
         self.setList()
+        self.answer.set("")
 
         if choice == "Mean" or choice == "MAD" or choice == "Median" or choice == "IQR":
             self.extraNumsState(choice, True, False)
@@ -219,6 +318,14 @@ class GUI:
             self.extraNumsState(choice, False, False)
 
     def extraNumsState(self, answerType, saveState, extraNums, num2Lbl="Number 2"):
+        """
+
+        :param answerType: What is the answer
+        :param saveState: Is saving allowed in this mode?
+        :param extraNums: Is 2 numbers or more required?
+        :param num2Lbl: What should the second number label be called?
+        :return:
+        """
         global allowSave
         if extraNums:
             self.numEnt2.config(state="normal")
@@ -233,6 +340,11 @@ class GUI:
             self.changeSaveState(saveState)
 
     def changeSaveState(self, allowSaving):
+        """
+        If saving is allowed or not
+        :param allowSaving: if saving is allowed or not
+        :return:
+        """
         global allowSave
         if allowSaving:
             self.saveNumBtn.config(state="normal")
@@ -243,8 +355,12 @@ class GUI:
             allowSave = False
 
     def saveNum(self):
+        """
+        Save the number into a list
+        :return:
+        """
         global numListSaved
-        if allowSave:
+        if allowSave and self.numEnt != "" and self.numEnt2 != "":
             try:
                 numListSaved.append(float(self.numEnt.get()))
             except ValueError:
@@ -257,50 +373,46 @@ class GUI:
             return False
 
     def calculate(self, numList=None):
+        """
+        Gets sent off to be calculated
+        :param numList:
+        :return:
+        """
         self.setList()
         if numList is None:
             numList = numListSaved
         choice = self.choice.get()
-        if choice == "Mean":
-            if self.numEnt.get() == "":
-                pass
-            else:
+        if choice == "Mean" or choice == "MAD" or choice == "Median" or choice == "IQR":
+            if self.numEnt.get() != "" or self.numEnt.get() != "0" or self.numEnt.get() != 0:
                 self.saveNum()
-            self.answer.set(str(Calculations().mean(numList)))
+        if choice == "Mean": # i need to somehow reduce this
+            self.answer.set(str(Math().mean(numList)))
         elif choice == "MAD":
-            if self.numEnt.get() == "":
-                pass
-            else:
-                self.saveNum()
-            self.answer.set(str(Calculations().MAD(numList)))
-        elif choice == "Power":
-            self.answer.set(str(Calculations().power(self.numEnt.get(), self.numEnt2.get())))
-        elif choice == "Square Root":
-            self.answer.set(str(Calculations().square_root(self.numEnt.get())))
-        elif choice == "Sine":
-            self.answer.set(str(Calculations().sine(self.numEnt.get())))
-        elif choice == "Cosine":
-            self.answer.set(str(Calculations().cosine(self.numEnt.get())))
-        elif choice == "Tangent":
-            self.answer.set(str(Calculations().tangent(self.numEnt.get())))
+            self.answer.set(str(Math().MAD(numList)))
         elif choice == "Median":
-            if self.numEnt.get() != "":
-                self.saveNum()
-            self.answer.set(str(Calculations().median(numList)))
+            self.answer.set(str(Math().median(numList)))
         elif choice == "IQR":
-            if self.numEnt.get() != "":
-                self.saveNum()
-            self.answer.set(str(Calculations().IQR(numList)))
+            self.answer.set(str(Math().IQR(numList)))
+        elif choice == "Power":
+            self.answer.set(str(Math().power(self.numEnt.get(), self.numEnt2.get())))
+        elif choice == "Square Root":
+            self.answer.set(str(Math().square_root(self.numEnt.get())))
+        elif choice == "Sine":
+            self.answer.set(str(Math().sine(self.numEnt.get())))
+        elif choice == "Cosine":
+            self.answer.set(str(Math().cosine(self.numEnt.get())))
+        elif choice == "Tangent":
+            self.answer.set(str(Math().tangent(self.numEnt.get())))
         elif choice == "Addition":
-            self.answer.set(str(Calculations().addition(self.numEnt.get(), self.numEnt2.get())))
+            self.answer.set(str(Math().addition(self.numEnt.get(), self.numEnt2.get())))
         elif choice == "Subtraction":
-            self.answer.set(str(Calculations().subtraction(self.numEnt.get(), self.numEnt2.get())))
+            self.answer.set(str(Math().subtraction(self.numEnt.get(), self.numEnt2.get())))
         elif choice == "Multiplication":
-            self.answer.set(str(Calculations().multiplication(self.numEnt.get(), self.numEnt2.get())))
+            self.answer.set(str(Math().multiplication(self.numEnt.get(), self.numEnt2.get())))
         elif choice == "Division":
-            self.answer.set(str(Calculations().division(self.numEnt.get(), self.numEnt2.get())))
+            self.answer.set(str(Math().division(self.numEnt.get(), self.numEnt2.get())))
         elif choice == "Remainder":
-            self.answer.set(str(Calculations().remainder(self.numEnt.get(), self.numEnt2.get())))
+            self.answer.set(str(Math().remainder(self.numEnt.get(), self.numEnt2.get())))
         numListSaved.clear()
 
 
