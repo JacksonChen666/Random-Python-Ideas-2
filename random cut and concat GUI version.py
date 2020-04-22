@@ -24,13 +24,14 @@ class tkWin:
         ffmpegPreset = ["ultrafast", "superfast", "veryfast", "faster", "fast",
                         "medium", "slow", "slower", "veryslow", "placebo"]
         self.varQuality = tk.StringVar(self.window, value=vidQ[2])
-        self.varXdim = tk.StringVar(self.window, value=1920)
-        self.varYdim = tk.StringVar(self.window, value=1080)
-        self.varMinLen = tk.StringVar(self.window, value=0.25)
-        self.varMaxLen = tk.StringVar(self.window, value=3)
-        self.varRepeats = tk.StringVar(self.window, value=5)
+        self.varXdim = tk.IntVar(self.window, value=1920)
+        self.varYdim = tk.IntVar(self.window, value=1080)
+        self.varMinLen = tk.IntVar(self.window, value=0.5)
+        self.varMaxLen = tk.IntVar(self.window, value=3)
+        self.varRepeats = tk.IntVar(self.window, value=5)
         self.varStatus = tk.StringVar(self.window, value="Waiting for folder to be selected...")
         self.varPreset = tk.StringVar(self.window, value="medium")
+        self.varDiscard = tk.IntVar(self.window, value=20)
 
         # Stuff
         self.presetLbl = tk.Label(self.window, text="FFmpeg compression preset:")
@@ -50,6 +51,9 @@ class tkWin:
 
         self.maxLenLbl = tk.Label(self.window, text="Max Clip Length:")
         self.maxLen = tk.Entry(self.window, textvariable=self.varMaxLen)
+
+        self.discardLbl = tk.Label(self.window, text="% of random clips discarded")
+        self.discardEnt = tk.Entry(self.window, textvariable=self.varDiscard)
 
         self.repeatsLbl = tk.Label(self.window, text="Repeat thru list times:")
         self.repeats = tk.Entry(self.window, textvariable=self.varRepeats)
@@ -82,21 +86,19 @@ class tkWin:
         self.maxLenLbl.grid(row=5, column=0, pady=5, sticky="e")
         self.maxLen.grid(row=5, column=1, pady=5, sticky="nesw")
 
-        self.repeatsLbl.grid(row=6, column=0, pady=5, sticky="e")
-        self.repeats.grid(row=6, column=1, pady=5, sticky="nesw")
+        self.discardLbl.grid(row=6, column=0, pady=5, sticky="e")
+        self.discardEnt.grid(row=6, column=1, pady=5, sticky="nesw")
 
-        self.status.grid(row=7, column=0, columnspan=2, pady=5)
+        self.repeatsLbl.grid(row=7, column=0, pady=5, sticky="e")
+        self.repeats.grid(row=7, column=1, pady=5, sticky="nesw")
 
-        self.chsFldBtn.grid(row=8, column=0, pady=5, padx=5, columnspan=2, sticky="nesw")
+        self.status.grid(row=8, column=0, columnspan=2, pady=5)
 
-        self.installBtn.grid(row=9, column=0, pady=5, padx=5, columnspan=2, sticky="nesw")
+        self.chsFldBtn.grid(row=9, column=0, pady=5, padx=5, columnspan=2, sticky="nesw")
 
-        self.stopBtn.grid(row=10, column=0, pady=5, padx=5, columnspan=2, sticky="nesw")
+        self.installBtn.grid(row=10, column=0, pady=5, padx=5, columnspan=2, sticky="nesw")
 
-        # Be on top of everything
-        self.window.lift()
-        self.window.attributes('-topmost', True)
-        self.window.update()
+        self.stopBtn.grid(row=11, column=0, pady=5, padx=5, columnspan=2, sticky="nesw")
 
         # don't quit yet
         self.window.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -115,6 +117,9 @@ class tkWin:
         self.varStatus.set(statusText)
         return
 
+    def validate(self):
+        pass
+
     def selectFolder(self):
         """
         Asks user what folder to concat videos from, then starts making it.
@@ -127,6 +132,17 @@ class tkWin:
                 return
         except NameError:
             pass
+        try:
+            int(self.varXdim.get())
+            int(self.varXdim.get())
+            float(self.varMinLen.get())
+            float(self.varMaxLen.get())
+            int(self.varRepeats.get())
+        except ValueError:
+            self.statusUpdate("Error:\nCan't convert string, Check your inputs")
+            self.window.update()
+            return False
+        self.window.update()
         self.folder_selected = filedialog.askdirectory(title="Directory of the videos")
         if self.folder_selected == '':
             return False
@@ -137,7 +153,7 @@ class tkWin:
 
         t = threading.Thread(target=self.processing, args=(
             self.folder_selected, self.xdim.get(), self.ydim.get(), self.minLen.get(), self.maxLen.get(),
-            self.repeats.get(), self.varPreset.get()), daemon=True)
+            self.repeats.get(), self.varDiscard.get(), self.varPreset.get()), daemon=True)
         t.setDaemon(True)
         t.start()
         # t.join() # don't join, or the window will freeze
@@ -151,7 +167,7 @@ class tkWin:
         try:
             run("pip install moviepy", shell=True, check=True)
             run("pip install moviepy --upgrade", shell=True, check=True)
-        except CalledProcessError:
+        except:
             run("pip3 install moviepy", shell=True, check=True)
             run("pip3 install moviepy --upgrade", shell=True, check=True)
         self.installBtn.destroy()
@@ -171,6 +187,7 @@ class tkWin:
         self.chsFldBtn.config(state=ED)
         self.quality.config(state=ED)
         self.preset.config(state=ED)
+        self.discardEnt.config(state=ED)
         return
 
     def on_closing(self):
@@ -182,10 +199,13 @@ class tkWin:
         self.window.lift()
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
             self.window.quit()
-            if t.is_alive():
-                print("\nThread still running, some files may not be properly finished using.")
-            else:
-                print("\nThread not running.")
+            try:
+                if t.is_alive():
+                    print("\nThread still running, some files may not be properly finished using.")
+                else:
+                    print("\nThread not running.")
+            except NameError:
+                pass
 
     def qualityChange(self, i, d, c):
         """
@@ -225,7 +245,7 @@ class tkWin:
             print("That's weird :/ option not found")
         return
 
-    def processing(self, directory, xdim, ydim, minLength, maxLength, repeats, ffmpeg_preset):
+    def processing(self, directory, xdim, ydim, minLength, maxLength, repeats, discardedClipsPercent, ffmpeg_preset):
         """
         Where the real magic happens.
         :param directory: Directory of videos.
@@ -234,27 +254,47 @@ class tkWin:
         :param minLength: Shortest clip possible.
         :param maxLength: Longest clip possible.
         :param repeats: How many more times to reuse all the clips.
+        :param discardedClipsPercent: percentage of how much clips to be discarded every loop
         :param ffmpeg_preset: FFmpeg compression preset (Refer to FFmpeg).
         :return: A Video.
         """
         global collages
         self.installBtn.destroy()  # i've warned you, that you have installed it!!
+
+        import os
+        # compile list of videos
+        videos = [os.path.join(directory, f) for f in os.listdir(directory) if os.path.join(directory, f).endswith(
+            ('.mp4', '.mkv', '.webm', '.mov', '.flv', '.avi', '.m4a', '.m4v', '.f4v', '.f4a')) and
+                  os.path.isfile(os.path.join(directory, f)) and f != "FINAL.MP4"]
+        if 250 < len(videos) * int(repeats) < 10000:
+            self.window.update()
+            if messagebox.askokcancel("a lotta clips",
+                                      "There could be up to {0} clips, and it can cause problems with "
+                                      "memory. Would you like to continue?".format(len(videos * int(repeats)))):
+                pass
+            else:
+                self.statusUpdate("Waiting for folder to be selected...")
+                return
+        elif len(videos) * int(repeats) > 10000:
+            self.window.update()
+            self.statusUpdate("Waiting for folder to be selected...")
+            messagebox.showwarning("WAY too many clips", "{0} is too many clips. The hard limit is 10000 "
+                                                         "clips.".format(len(videos) * int(repeats)))
+
+            return
         self.changeButtons("disabled")
         print("Importing...")
         self.statusUpdate("Importing...")
         from multiprocessing import cpu_count
-        import random, os, moviepy.editor, moviepy
+        import moviepy.editor, moviepy, random
 
         outputs = []
         print("Thread count of export process: {0}".format(str(cpu_count() * 2)))
         self.statusUpdate("Thread count of export process: {0}".format(str(cpu_count() * 2)))
-        # compile list of videos
-        videos = [os.path.join(directory, f) for f in os.listdir(directory) if os.path.join(directory, f).endswith(
-            ('.mp4', '.mkv', '.webm', '.mov', '.flv', '.avi', '.m4a', '.m4v', '.f4v', '.f4a', '.m4b')) and
-                  os.path.isfile(os.path.join(directory, f)) and f != "FINAL.mp4"]
 
         for q in range(int(repeats)):
-            inputs = [q for q in videos if random.randint(0, 1) == 0]  # randomly selects from original full list
+            inputs = [q for q in videos if random.randint(0, 100) >= float(
+                discardedClipsPercent)]  # randomly selects from original full list
             random.shuffle(inputs)
             self.statusUpdate("Repeating {0}/{1} times and Cutting...".format(q + 1, int(repeats)))
             for i in inputs:
@@ -282,15 +322,12 @@ class tkWin:
             self.changeButtons("normal")
             self.statusUpdate("An error occurred")
             collage.close()
-            clips.close()
-            del video_file_clip.make_frame
             raise
         print("Done")
-        self.statusUpdate("Done\nClose and open the app to continue without memory overflow problems")
+        self.statusUpdate("Done\nReopen the app to avoid memory problems")
         self.changeButtons("normal")
         self.folder_selected = ""
         collage.close()  # clean up
-        # Calls function that plays audio that it is done
         return outputs
 
 

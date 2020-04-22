@@ -11,6 +11,7 @@ class Math:
     """
     Where math happens
     """
+
     @staticmethod
     def addition(num, num2):
         """
@@ -143,26 +144,46 @@ class Math:
 
     def IQR(self, numList):
         """
-        IQR
+        IQR (originated from Khan Academy, could be inaccurate in some places)
         :param numList: Number List
         :return: Number
         """
-        mainMedian = float(self.median(numList))  # get the median of whole list
-        lowerList = []  # save the lower and higher part of the list into a new lower and higher part of a list
-        # separately
-        higherList = []
-        for i in numList:
-            if i < mainMedian:
-                lowerList.append(i)
-            elif i > mainMedian:
-                higherList.append(i)
+        # main idea:
+        # get the lower and higher part of the list of the median
+        # change the numbers into a median
+        # append everything that's below and above the in between, and do the normal median on both lower and higher
+        numList.sort()
+        if (len(numList) % 2) == 0:
+            lowerListChoice = self.rounding(len(numList) / 2 - 1, "down")
+            higherListChoice = self.rounding(len(numList) / 2, "up")
+        else:
+            lowerListChoice = self.rounding(len(numList) / 2, "down")
+            higherListChoice = self.rounding(len(numList) / 2 - 1, "up")
 
-        lowerMedian = float(self.median(lowerList))  # get the median both the lower and higher part
-        higherMedian = float(self.median(higherList))
-        if lowerMedian > higherMedian:  # subtract q1 to q3 or q3 to q1 (one must be higher than the other)
+        lowerList = []
+        higherList = []
+        for i in range(len(numList)):
+            if i < lowerListChoice:
+                lowerList.append(numList[i])
+            elif i > higherListChoice:
+                higherList.append(numList[i])
+            elif i == lowerListChoice or i == higherListChoice:
+                pass
+        lowerList.sort()
+        higherList.sort()
+        lowerMedian = self.median(lowerList)
+        higherMedian = self.median(higherList)
+        if lowerMedian > higherMedian:
             return lowerMedian - higherMedian
-        elif lowerMedian < higherMedian:
+        elif higherMedian > lowerMedian:
             return higherMedian - lowerMedian
+
+    @staticmethod
+    def rounding(num, upDown):
+        if upDown.lower() == "up":
+            return math.ceil(num)
+        elif upDown.lower() == "down":
+            return math.floor(num)
 
 
 class GUI:
@@ -170,10 +191,11 @@ class GUI:
         """
         The GUI mainly for people who doesn't know how to
         """
-        global numListSaved, allowSave
+        global numListSaved, allowSave, onTop
         super().__init__()
         numListSaved = []
         allowSave = True
+        onTop = False
         self.window = tk.Tk()
         self.window.resizable(0, 0)
         self.window.geometry("+50+60")
@@ -201,12 +223,12 @@ class GUI:
         self.numEnt2 = tk.Entry(self.window, textvariable=self.numVar2)
 
         self.numListLbl = tk.Label(self.window, text="Nums list:")
-        self.numList = tk.Label(self.window, textvariable=self.varNumList, wraplength=200, justify="center")
+        self.numList = tk.Label(self.window, textvariable=self.varNumList, wraplength=180, justify="center")
         # self.numList = tk.Entry(self.window, textvariable=self.varNumList)
         # self.numList.config(state="disable")
 
         self.finalLbl = tk.Label(self.window, text="Final answer:")
-        self.finalEnt = tk.Label(self.window, textvariable=self.answer, wraplength=200, justify="center")
+        self.finalEnt = tk.Label(self.window, textvariable=self.answer, wraplength=180, justify="center")
         # self.finalEnt = tk.Entry(self.window, textvariable=self.answer)
         # self.finalEnt.config(state="disable")
 
@@ -214,6 +236,8 @@ class GUI:
         self.calcBtn = tk.Button(self.window, text="Calculate", command=self.calculate)
 
         self.clearBtn = tk.Button(self.window, text="Clear List", command=self.clearList)
+
+        self.onTopBtn = tk.Button(self.window, text="Floating window", command=self.floatingWin)
 
         # grid
         self.calcTypeLbl.grid(row=0, column=0, pady=5, sticky="e")
@@ -234,7 +258,8 @@ class GUI:
         self.saveNumBtn.grid(row=5, column=0, padx=5, pady=5, sticky="nesw")
         self.calcBtn.grid(row=5, column=1, padx=5, pady=5, sticky="nesw")
 
-        self.clearBtn.grid(row=6, column=0, padx=5, pady=5, sticky="nesw", columnspan=2)
+        self.onTopBtn.grid(row=6, column=0, padx=5, pady=5, sticky="nesw", columnspan=1)
+        self.clearBtn.grid(row=6, column=1, padx=5, pady=5, sticky="nesw", columnspan=1)
 
         # checks and stuff
         self.choice.trace("w", self.choiceCheck)
@@ -260,6 +285,19 @@ class GUI:
 
         # start
         self.window.mainloop()
+
+    def floatingWin(self):
+        global onTop
+        if onTop:
+            self.window.lift()
+            self.window.attributes('-topmost', False)
+            self.window.update()
+            onTop = False
+        elif not onTop:
+            self.window.lift()
+            self.window.attributes('-topmost', True)
+            self.window.update()
+            onTop = True
 
     def key_release(self, event):
         """
