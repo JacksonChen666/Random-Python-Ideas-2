@@ -1,6 +1,7 @@
 """
 Math except the software does it and not you
 """
+# TODO: Reduce size of the if statement at function line 375 (Calculate)
 import math
 import statistics
 import tkinter as tk
@@ -13,7 +14,7 @@ class Math:
     @staticmethod
     def addition(num, num2):
         """
-        Addition.
+        Addition
         :param num: Number to add to number
         :param num2: Number to add to other number
         :return: Number added together
@@ -23,7 +24,7 @@ class Math:
     @staticmethod
     def subtraction(num, num2):
         """
-        Subtraction.
+        Subtraction
         :param num: Number subtracted by number 2
         :param num2: Number 2
         :return: Number
@@ -317,12 +318,13 @@ class GUI:
         elif choice == "Square Root" or choice == "Cosine" or choice == "Sine" or choice == "Tangent":
             self.extraNumsState(choice, False, False)
 
-    def extraNumsState(self, answerType, saveState, extraNums, num2Lbl="Number 2"):
+    def extraNumsState(self, answerType, saveState, extraNums, num1Lbl="Number 1", num2Lbl="Number 2"):
         """
-
-        :param answerType: What is the answer
+        Allow extra numbers. Or not. I don't care.
+        :param answerType: What is the answer?
         :param saveState: Is saving allowed in this mode?
-        :param extraNums: Is 2 numbers or more required?
+        :param extraNums: Is 2 numbers required?
+        :param num1Lbl: What should the first number label be called?
         :param num2Lbl: What should the second number label be called?
         :return:
         """
@@ -330,14 +332,13 @@ class GUI:
         if extraNums:
             self.numEnt2.config(state="normal")
             self.numLbl2.config(text="{0}:".format(num2Lbl))
-            self.finalLbl.config(text="Answer ({0}):".format(answerType))
-            self.changeSaveState(saveState)
         elif not extraNums:
             self.numEnt2.config(state="disabled")
             self.numLbl2.config(text="No extra nums")
-            self.finalLbl.config(text="Answer ({0}):".format(answerType))
             self.numVar2.set("")
-            self.changeSaveState(saveState)
+        self.numLbl.config(text="{0}:".format(num1Lbl))
+        self.finalLbl.config(text="Answer ({0}):".format(answerType))
+        self.changeSaveState(saveState)
 
     def changeSaveState(self, allowSaving):
         """
@@ -385,7 +386,7 @@ class GUI:
         if choice == "Mean" or choice == "MAD" or choice == "Median" or choice == "IQR":
             if self.numEnt.get() != "" or self.numEnt.get() != "0" or self.numEnt.get() != 0:
                 self.saveNum()
-        if choice == "Mean": # i need to somehow reduce this
+        if choice == "Mean":  # i need to somehow reduce this if statement
             self.answer.set(str(Math().mean(numList)))
         elif choice == "MAD":
             self.answer.set(str(Math().MAD(numList)))
