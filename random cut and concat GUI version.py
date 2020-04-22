@@ -2,7 +2,6 @@
 This program takes a folder of videos, pick a random spot, and then just combine it into a video and done
 """
 # TODO: Open folder from system to show the final mp4 file
-# my greatest achievement of a gui app with things this is too good
 import tkinter as tk
 from tkinter import filedialog, messagebox
 
@@ -151,8 +150,10 @@ class tkWin:
         from subprocess import run
         try:
             run("pip install moviepy", shell=True, check=True)
-        except:
+            run("pip install moviepy --upgrade", shell=True, check=True)
+        except CalledProcessError:
             run("pip3 install moviepy", shell=True, check=True)
+            run("pip3 install moviepy --upgrade", shell=True, check=True)
         self.installBtn.destroy()
 
     def changeButtons(self, ED):
@@ -232,7 +233,7 @@ class tkWin:
         :param ydim: Height of output video.
         :param minLength: Shortest clip possible.
         :param maxLength: Longest clip possible.
-        :param repeats: How many more times to reuse the clips.
+        :param repeats: How many more times to reuse all the clips.
         :param ffmpeg_preset: FFmpeg compression preset (Refer to FFmpeg).
         :return: A Video.
         """
@@ -248,14 +249,12 @@ class tkWin:
         print("Thread count of export process: {0}".format(str(cpu_count() * 2)))
         self.statusUpdate("Thread count of export process: {0}".format(str(cpu_count() * 2)))
         # compile list of videos
-        # inputs = [os.path.join(directory, f) for f in os.listdir(directory) if
-        #           os.path.isfile(os.path.join(directory, f)) and fnmatch.fnmatch(f, ext)]
-
-        inputs = [os.path.join(directory, f) for f in os.listdir(directory) if os.path.join(directory, f).endswith(
+        videos = [os.path.join(directory, f) for f in os.listdir(directory) if os.path.join(directory, f).endswith(
             ('.mp4', '.mkv', '.webm', '.mov', '.flv', '.avi', '.m4a', '.m4v', '.f4v', '.f4a', '.m4b')) and
-                  os.path.isfile(os.path.join(directory, f))]
+                  os.path.isfile(os.path.join(directory, f)) and f != "FINAL.mp4"]
 
         for q in range(int(repeats)):
+            inputs = [q for q in videos if random.randint(0, 1) == 0]  # randomly selects from original full list
             random.shuffle(inputs)
             self.statusUpdate("Repeating {0}/{1} times and Cutting...".format(q + 1, int(repeats)))
             for i in inputs:
@@ -270,9 +269,6 @@ class tkWin:
 
                 # cut a subclip and store it later
                 outputs.append(clip.subclip(start, start + length))
-
-                # bye
-                clip.close()
         # combine clips from different videos
         print("\nConcatenating...")
         self.statusUpdate("Concatenating...")
@@ -286,12 +282,14 @@ class tkWin:
             self.changeButtons("normal")
             self.statusUpdate("An error occurred")
             collage.close()
+            clips.close()
+            del video_file_clip.make_frame
             raise
         print("Done")
-        self.statusUpdate("Done")
-        collage.close()
+        self.statusUpdate("Done\nClose and open the app to continue without memory overflow problems")
         self.changeButtons("normal")
         self.folder_selected = ""
+        collage.close()  # clean up
         # Calls function that plays audio that it is done
         return outputs
 
