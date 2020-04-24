@@ -1,0 +1,4 @@
+future>=0.18.2
+pynput>=1.6.8
+Pillow>=6.2.1
+DateTime>=4.3

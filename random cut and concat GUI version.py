@@ -17,6 +17,7 @@ class tkWin:
         self.window.geometry("+50+60")
         self.window.resizable(False, False)  # don't resize because it doesn't change the grid
         self.window.title("Random cut and concat")
+        self.folder_selected = ""
 
         # variables
         vidQ = ['2160p (4K)', '1440p (2K)', '1080p (Full HD)',
@@ -126,7 +127,7 @@ class tkWin:
         :return: A video.
         """
         global t
-        import threading
+        import threading, os
         try:  # Validation
             if t.is_alive():
                 return
@@ -138,13 +139,14 @@ class tkWin:
             float(self.varMinLen.get())
             float(self.varMaxLen.get())
             int(self.varRepeats.get())
+            int(self.varDiscard.get())
         except ValueError:
             self.statusUpdate("Error:\nCan't convert string, Check your inputs")
             self.window.update()
             return False
         self.window.update()
         self.folder_selected = filedialog.askdirectory(title="Directory of the videos")
-        if self.folder_selected == '':
+        if self.folder_selected == '' and not os.path.isfile(self.folder_selected):
             return False
         print(self.folder_selected + "/")
         self.statusUpdate("Processing... If this does not change, there might be an error.")
@@ -260,26 +262,28 @@ class tkWin:
         """
         global collages
         self.installBtn.destroy()  # i've warned you, that you have installed it!!
-
         import os
+
         # compile list of videos
-        videos = [os.path.join(directory, f) for f in os.listdir(directory) if os.path.join(directory, f).endswith(
-            ('.mp4', '.mkv', '.webm', '.mov', '.flv', '.avi', '.m4a', '.m4v', '.f4v', '.f4a')) and
-                  os.path.isfile(os.path.join(directory, f)) and f != "FINAL.MP4"]
-        if 250 < len(videos) * int(repeats) < 10000:
+        videoFormats = ('.mp4', '.mkv', '.webm', '.mov', '.flv', '.avi', '.m4a', '.m4v', '.f4v', '.f4a')
+        clips = [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith(videoFormats) and
+                 os.path.isfile(os.path.join(directory, f)) and f != "FINAL.MP4"]
+        print([f for f in os.listdir(directory) if f.endswith(videoFormats) and
+               os.path.isfile(os.path.join(directory, f)) and f != "FINAL.MP4"])
+        if 500 < len(clips) * int(repeats) < 10000:
             self.window.update()
             if messagebox.askokcancel("a lotta clips",
                                       "There could be up to {0} clips, and it can cause problems with "
-                                      "memory. Would you like to continue?".format(len(videos * int(repeats)))):
+                                      "memory. Would you like to continue?".format(len(clips * int(repeats)))):
                 pass
             else:
                 self.statusUpdate("Waiting for folder to be selected...")
                 return
-        elif len(videos) * int(repeats) > 10000:
+        elif len(clips) * int(repeats) > 10000:
             self.window.update()
             self.statusUpdate("Waiting for folder to be selected...")
             messagebox.showwarning("WAY too many clips", "{0} is too many clips. The hard limit is 10000 "
-                                                         "clips.".format(len(videos) * int(repeats)))
+                                                         "clips.".format(len(clips) * int(repeats)))
 
             return
         self.changeButtons("disabled")
@@ -293,7 +297,7 @@ class tkWin:
         self.statusUpdate("Thread count of export process: {0}".format(str(cpu_count() * 2)))
 
         for q in range(int(repeats)):
-            inputs = [q for q in videos if random.randint(0, 100) >= float(
+            inputs = [q for q in clips if random.randint(0, 100) >= float(
                 discardedClipsPercent)]  # randomly selects from original full list
             random.shuffle(inputs)
             self.statusUpdate("Repeating {0}/{1} times and Cutting...".format(q + 1, int(repeats)))
@@ -309,20 +313,14 @@ class tkWin:
 
                 # cut a subclip and store it later
                 outputs.append(clip.subclip(start, start + length))
-        # combine clips from different videos
         print("\nConcatenating...")
         self.statusUpdate("Concatenating...")
+        # combine clips from different videos
+        collage = moviepy.editor.concatenate_videoclips(outputs)
         print('Writing... Thread count: {0}'.format(str(cpu_count() * 2)))
         self.statusUpdate("Writing... Thread count: {0}.\nKilling the GUI may not stop the writing process".format(str(
             cpu_count() * 2)))
-        collage = moviepy.editor.concatenate_videoclips(outputs)
-        try:
-            collage.write_videofile(directory + '/FINAL.MP4', threads=cpu_count() * 2, preset=ffmpeg_preset)
-        except AttributeError:
-            self.changeButtons("normal")
-            self.statusUpdate("An error occurred")
-            collage.close()
-            raise
+        collage.write_videofile(directory + '/FINAL.MP4', threads=cpu_count() * 2, preset=ffmpeg_preset)
         print("Done")
         self.statusUpdate("Done\nReopen the app to avoid memory problems")
         self.changeButtons("normal")
