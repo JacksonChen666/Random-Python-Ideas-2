@@ -3,6 +3,7 @@ This program takes a folder of videos, pick a random spot, and then just combine
 """
 import tkinter as tk
 from tkinter import filedialog, messagebox
+import logging
 
 
 class tkWin:

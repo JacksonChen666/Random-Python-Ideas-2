@@ -122,7 +122,7 @@ def mac_on_release(key):
                 current = set()
 
 
-def win_on_move():  # windows version
+def win_on_move(x, y):  # windows version
     # print("{} {}".format(x, y))
     if allowed:  # well that happened
         if -1.0 <= x <= 1:

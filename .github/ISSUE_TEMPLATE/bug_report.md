@@ -38,7 +38,7 @@ If applicable, add screenshots to help explain your problem.
 - [ ] I know how to use checkboxes
 - [ ] I have clearly shown the steps to reproduce
 - [ ] I have clearly entered device information
-- [ ] I am not violating any GitHub ToS in any way
+- [ ] **I am not violating any *GitHub ToS* in any way**
 
 **Additional context**
 Add any other context about the problem here.

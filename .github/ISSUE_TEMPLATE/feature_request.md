@@ -20,7 +20,7 @@ A clear and concise description of any alternative solutions or features you've 
 - [ ] I know how to use checkboxes
 - [ ] I have clearly explained the suggestion
 - [ ] The suggestion is ***not*** part of a bug
-- [ ] I am not violating any GitHub ToS in any way
+- [ ] **I am not violating any *GitHub ToS* in any way**
 
 **Additional context**
 Add any other context or screenshots about the feature request here.
