@@ -1,7 +1,6 @@
 """
 This program takes a folder of videos, pick a random spot, and then just combine it into a video and done
 """
-# TODO: Open folder from system to show the final mp4 file
 import tkinter as tk
 from tkinter import filedialog, messagebox
 
@@ -158,7 +157,6 @@ class tkWin:
             self.repeats.get(), self.varDiscard.get(), self.varPreset.get()), daemon=True)
         t.setDaemon(True)
         t.start()
-        # t.join() # don't join, or the window will freeze
 
     def installLibraries(self):
         """

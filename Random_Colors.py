@@ -2,6 +2,7 @@ import atexit
 import logging
 import random
 import threading
+from math import pow
 
 from PIL import Image, ImageDraw
 
@@ -40,7 +41,7 @@ def exitCode():
     try:
         logging.info("Saving image...")
         images[0].save('Random Colors.gif', save_all=True, append_images=images[1:], optimize=False,
-                       duration=float(amountOfImages / 2), loop=0)
+                       duration=float(amountOfImages / (amountOfImages / 25)), loop=0)
         logging.info("Saved image")
     except IndexError:
         logging.exception("Failed to save image due to IndexError (Most likely there's no images ever "
@@ -76,7 +77,7 @@ def setup(widths=width, heights=height, frames=amountOfImages, loggingLevel=logg
     amountOfImages = frames
     logging.basicConfig(
         level=loggingLevel,
-        format="%(asctime)s [%(levelname)s] %(threadName)s: %(msg)s",
+        format="%(asctime)s [%(levelname)s] {%(threadName)s}: %(msg)s",
         filename='random images.log',
         filemode="w",
     )
@@ -85,9 +86,9 @@ def setup(widths=width, heights=height, frames=amountOfImages, loggingLevel=logg
 def readLog():
     with open("random images.log") as f:
         print(
-            "Log format: `Year-Month-Day,MS Hour:Min:Sec [Level] Thread name: Message`\nLog:\n{}".format(f.read()))
+            "Log format: `Year-Month-Day Hour:Min:Sec,MS [Level] Thread name: Message`\nLog:\n{}".format(f.read()))
     return
 
 
 if __name__ == '__main__':
-    startup()
+    startup(1280, 720, 10)
