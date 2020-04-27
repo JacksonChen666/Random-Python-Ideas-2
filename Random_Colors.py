@@ -2,14 +2,16 @@ import atexit
 import logging
 import random
 import threading
-from math import pow
+import time
 
 from PIL import Image, ImageDraw
 
 width = 1920
 height = 1080
-fps = 30
-colors = ["white", "black"]
+
+colors = []
+for q in range(10):
+    colors.append(random.choice(['white', 'black']))
 images = []
 amountOfImages = 10
 threads = []
@@ -41,54 +43,56 @@ def saveGif():
     logging.info("All {} threads finished".format(amountOfImages))
     try:
         logging.info("Saving image...")
-        images[0].save('Random Colors.gif', save_all=True, append_images=images[1:], optimize=False, fps=fps, loop=0)
+        images[0].save('Random Colors.gif', save_all=True, append_images=images[1:], optimize=False, loop=0)
         logging.info("Saved image")
     except IndexError:
         logging.exception("Failed to save image due to IndexError (Most likely there's no images ever "
                           "generated)")
         exit()
-    if __name__ == '__main__':
-        readLog()
     return images
 
 
-def startup(widths=width, heights=height, frames=amountOfImages, fpsz=fps, loggingLevel=logging.INFO):  # do it all
+def startup(widths=width, heights=height, frames=amountOfImages, loggingLevel=logging.INFO):  # do it all
     # at the same time
-    setup(widths=widths, heights=heights, frames=frames, fpsz=fpsz, loggingLevel=loggingLevel)
+    setup(widths=widths, heights=heights, frames=frames, loggingLevel=loggingLevel)
     for i in range(amountOfImages):
         threads.append(threading.Thread(target=randomImage))
         threads[i].start()
         logging.info("Started Thread-{}".format(i + 1))
     logging.info("All {} threads started".format(amountOfImages))
+    TIA = True
+    while TIA:
+        for i in threads:
+            if i.is_alive():
+                TIA = True
+                continue
+            else:
+                TIA = False
+        for t in range(len(threads)):
+            logging.info('Joining thread-{}'.format(t + 1))
+            threads[t].join()
+            logging.info("Left thread-{}".format(t + 1))
 
 
-def startup2(widths=width, heights=height, frames=amountOfImages, fpsz=fps, loggingLevel=logging.INFO):  # do it
+def startup2(widths=width, heights=height, frames=amountOfImages, loggingLevel=logging.INFO):  # do it
     # individually
-    setup(widths=widths, heights=heights, frames=frames, fpsz=fpsz, loggingLevel=loggingLevel)
+    setup(widths=widths, heights=heights, frames=frames, loggingLevel=loggingLevel)
     for i in range(amountOfImages):
         randomImage()
 
 
-def setup(widths=width, heights=height, frames=amountOfImages, fpsz=fps, loggingLevel=logging.INFO):
-    global threads, width, height, amountOfImages, fps
+def setup(widths=width, heights=height, frames=amountOfImages, loggingLevel=logging.INFO):
+    global threads, width, height, amountOfImages
     logging.basicConfig(
         level=loggingLevel,
         format="%(asctime)s [%(levelname)s] {%(threadName)s}: %(msg)s",
-        filename="random colors.log",
-        filemode="w"
+        # filename="random colors.log",
+        # filemode="w"
     )
     width = widths
     height = heights
     amountOfImages = frames
-    fps = fpsz
-
-
-def readLog():
-    with open("random colors.log") as f:
-        print(
-            "Log format: `Year-Month-Day Hour:Min:Sec,MS [Level] Thread name: Message`\nLog:\n{}".format(f.read()))
-    return
 
 
 if __name__ == '__main__':
-    startup(frames=10, fpsz=1, loggingLevel=logging.DEBUG)
+    startup(1024, 1024, frames=30)
