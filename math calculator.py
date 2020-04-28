@@ -5,6 +5,7 @@ Math except the software does it and not you
 import math
 import statistics
 import tkinter as tk
+from typing import Any, List
 
 
 class Math:
@@ -13,70 +14,101 @@ class Math:
     """
 
     @staticmethod
-    def addition(num, num2):
+    def addition(num=None, num2=None):
+        global tkWin
         """
         Addition
         :param num: Number to add to number
         :param num2: Number to add to other number
         :return: Number added together
         """
+        if num is None:
+            num = tkWin.numEnt.get()
+        if num2 is None:
+            num2 = tkWin.numEnt2.get()
         return float(num) + float(num2)
 
     @staticmethod
-    def subtraction(num, num2):
+    def subtraction(num=None, num2=None):
+        global tkWin
         """
         Subtraction
         :param num: Number subtracted by number 2
         :param num2: Number 2
         :return: Number
         """
+        if num is None:
+            num = tkWin.numEnt.get()
+        if num2 is None:
+            num2 = tkWin.numEnt2.get()
         return float(num) - float(num2)
 
     @staticmethod
-    def multiplication(num, num2):
+    def multiplication(num=None, num2=None):
+        global tkWin
         """
         Multiplication
         :param num: Number multiplied by Number 2
         :param num2: Number 2
         :return: Number
         """
+        if num is None:
+            num = tkWin.numEnt.get()
+        if num2 is None:
+            num2 = tkWin.numEnt2.get()
         return float(num) * float(num2)
 
     @staticmethod
-    def division(num, num2):
+    def division(num=None, num2=None):
+        global tkWin
         """
         Divide
         :param num: Number Divided by Number 2
         :param num2: Number 2
         :return: Number
         """
+        if num is None:
+            num = tkWin.numEnt.get()
+        if num2 is None:
+            num2 = tkWin.numEnt2.get()
         return float(num) / float(num2)
 
     @staticmethod
-    def remainder(num, num2):
+    def remainder(num=None, num2=None):
+        global tkWin
         """
         Remainder from division
         :param num:
         :param num2:
         :return: Number
         """
+        if num is None:
+            num = tkWin.numEnt.get()
+        if num2 is None:
+            num2 = tkWin.numEnt2.get()
         return math.remainder(float(num), float(num2))
 
     @staticmethod
-    def mean(numList):
+    def mean(numList=None):
+        global tkWin
         """
         Add all and divide by length of list
         :param numList: Number List
         :return: Number
         """
+        if numList is None:
+            numList = tkWin.numListSaved
         return float(statistics.mean(numList))
 
-    def MAD(self, numList):
+    def MAD(self, numList=None):
+        global tkWin
         """
         MAD
         :param numList: Number list
         :return: Number
         """
+        if numList is None:
+            numList = tkWin.numListSaved
         tempMean = float(self.mean(numList))  # get mean of list
         tempList = []
         for num in numList:
@@ -88,61 +120,82 @@ class Math:
         return self.mean(tempList)  # get the mean
 
     @staticmethod
-    def power(num, power):
+    def power(num=None, num2=None):
+        global tkWin
         """
         To the power of
         :param num: Number to the power of number power
-        :param power: Number power
+        :param num2: Number power
         :return: Number
         """
-        return math.pow(float(num), float(power))
+        if num is None:
+            num = tkWin.numEnt.get()
+        if num2 is None:
+            num2 = tkWin.numEnt2.get()
+        return math.pow(float(num), float(num2))
 
     @staticmethod
-    def square_root(num):
+    def square_root(num=None):
+        global tkWin
         """
         Square Root
         :param num: Number to square root
         :return: Number
         """
+        if num is None:
+            num = tkWin.numEnt.get()
         return math.sqrt(float(num))
 
     @staticmethod
-    def cosine(num):
+    def cosine(num=None):
+        global tkWin
         """
         Cosine
         :param num: Number to cosine
         :return: Number
         """
+        if num is None:
+            num = tkWin.numEnt.get()
         return math.cos(float(num))
 
     @staticmethod
-    def sine(num):
+    def sine(num=None):
+        global tkWin
         """
         Sine
         :param num: Number to sine
         :return: Number
         """
+        if num is None:
+            num = tkWin.numEnt.get()
         return math.sin(float(num))
 
     @staticmethod
-    def tangent(num):
+    def tangent(num=None):
+        global tkWin
         """
         Tangent
         :param num: Number
         :return: Number
         """
+        if num is None:
+            num = tkWin.numEnt.get()
         return math.tan(float(num))
 
     @staticmethod
-    def median(numList):
+    def median(numList=None):
+        global tkWin
         """
         Median
         :param numList: Number List
         :return: Number
         """
+        if numList is None:
+            numList = tkWin.numListSaved
         return float(statistics.median(numList))
 
-    def IQR(self, numList):
+    def IQR(self, numList=None):
+        global tkWin
         """
         IQR (originated from Khan Academy, could be inaccurate in some places)
         :param numList: Number List
@@ -152,6 +205,8 @@ class Math:
         # get the lower and higher part of the list of the median
         # change the numbers into a median
         # append everything that's below and above the in between, and do the normal median on both lower and higher
+        if numList is None:
+            numList = tkWin.numListSaved
         numList.sort()
         if (len(numList) % 2) == 0:
             lowerListChoice = self.rounding(len(numList) / 2 - 1, "down")
@@ -179,11 +234,16 @@ class Math:
             return higherMedian - lowerMedian
 
     @staticmethod
-    def rounding(num, upDown):
+    def rounding(num=None, upDown=None):
+        global tkWin
+        if num is None:
+            num = tkWin.numEnt.get()
         if upDown.lower() == "up":
             return math.ceil(num)
         elif upDown.lower() == "down":
             return math.floor(num)
+        elif upDown is None:
+            return roung(num)
 
 
 class GUI:
@@ -191,9 +251,9 @@ class GUI:
         """
         The GUI mainly for people who doesn't know how to
         """
-        global numListSaved, allowSave, onTop
+        global numListSaved, allowSave, onTop, choices
         super().__init__()
-        numListSaved = []
+        self.numListSaved = []
         allowSave = True
         onTop = False
         self.window = tk.Tk()
@@ -202,17 +262,18 @@ class GUI:
         self.window.title("Math Calculator")
 
         # vars
-        self.choice = tk.Variable(self.window, value="Mean")
         self.numVar = tk.Variable(self.window)
         self.numVar2 = tk.Variable(self.window)
         self.answer = tk.Variable(self.window)
         self.varNumList = tk.Variable(self.window)
 
         # stuff
-        choices = ['Addition', 'Subtraction', 'Multiplication', 'Division', 'Remainder', 'Cosine', 'IQR', 'MAD',
-                   'Mean', 'Median', 'Power', 'Sine', 'Square Root', 'Tangent']
+        choices = ["Addition", "Cosine", "Division", "IQR", "MAD", "Mean", "Median", "Multiplication", "Power",
+                   "Remainder", "Sine", "Square Root", "Subtraction", "Tangent"]  # please no change or break
         choices.sort()
         print(*choices)
+        print(len(choices))
+        self.choice = tk.Variable(self.window, value=choices[0])
         self.calcTypeLbl = tk.Label(self.window, text="Type of calculation:")
         self.calcType = tk.OptionMenu(self.window, self.choice, *choices)
 
@@ -322,7 +383,7 @@ class GUI:
         :return:
         """
         global numListSaved
-        self.varNumList.set(numListSaved)
+        self.varNumList.set(self.numListSaved)
 
     def clearList(self):
         """
@@ -331,8 +392,8 @@ class GUI:
         """
         global numListSaved
         if allowSave:
-            numListSaved.clear()
-            self.varNumList.set(numListSaved)
+            self.numListSaved.clear()
+            self.varNumList.set(self.numListSaved)
 
     def choiceCheck(self, i=None, d=None, c=None):
         """
@@ -344,7 +405,7 @@ class GUI:
         """
         global numListSaved, allowSave
         choice = self.choice.get()
-        numListSaved.clear()
+        self.numListSaved.clear()
         self.setList()
         self.answer.set("")
 
@@ -401,7 +462,7 @@ class GUI:
         global numListSaved
         if allowSave and self.numEnt != "" and self.numEnt2 != "":
             try:
-                numListSaved.append(float(self.numEnt.get()))
+                self.numListSaved.append(float(self.numEnt.get()))
             except ValueError:
                 self.numVar.set("")
                 return False
@@ -414,45 +475,68 @@ class GUI:
     def calculate(self, numList=None):
         """
         Gets sent off to be calculated
-        :param numList:
+        :param numList: number list. already set is not set
         :return:
         """
+        global choices
         self.setList()
         if numList is None:
-            numList = numListSaved
+            numList = self.numListSaved
         choice = self.choice.get()
+        m = Math()
+        choicesThing = [
+            m.addition,
+            m.cosine,
+            m.division,
+            m.IQR,
+            m.MAD,
+            m.mean,
+            m.median,
+            m.multiplication,
+            m.power,
+            m.remainder,
+            m.sine,
+            m.square_root,
+            m.subtraction,
+            m.tangent
+        ]
+        print("{}\n{}\n{}".format(choice, choices, choicesThing))
         if choice == "Mean" or choice == "MAD" or choice == "Median" or choice == "IQR":
             if self.numEnt.get() != "" or self.numEnt.get() != "0" or self.numEnt.get() != 0:
                 self.saveNum()
-        if choice == "Mean":  # i need to somehow reduce this if statement
-            self.answer.set(str(Math().mean(numList)))
-        elif choice == "MAD":
-            self.answer.set(str(Math().MAD(numList)))
-        elif choice == "Median":
-            self.answer.set(str(Math().median(numList)))
-        elif choice == "IQR":
-            self.answer.set(str(Math().IQR(numList)))
-        elif choice == "Power":
-            self.answer.set(str(Math().power(self.numEnt.get(), self.numEnt2.get())))
-        elif choice == "Square Root":
-            self.answer.set(str(Math().square_root(self.numEnt.get())))
-        elif choice == "Sine":
-            self.answer.set(str(Math().sine(self.numEnt.get())))
-        elif choice == "Cosine":
-            self.answer.set(str(Math().cosine(self.numEnt.get())))
-        elif choice == "Tangent":
-            self.answer.set(str(Math().tangent(self.numEnt.get())))
-        elif choice == "Addition":
-            self.answer.set(str(Math().addition(self.numEnt.get(), self.numEnt2.get())))
-        elif choice == "Subtraction":
-            self.answer.set(str(Math().subtraction(self.numEnt.get(), self.numEnt2.get())))
-        elif choice == "Multiplication":
-            self.answer.set(str(Math().multiplication(self.numEnt.get(), self.numEnt2.get())))
-        elif choice == "Division":
-            self.answer.set(str(Math().division(self.numEnt.get(), self.numEnt2.get())))
-        elif choice == "Remainder":
-            self.answer.set(str(Math().remainder(self.numEnt.get(), self.numEnt2.get())))
-        numListSaved.clear()
+        for i in range(len(choices)):
+            if choice == choices[i - 1]:
+                self.answer.set(choicesThing[i-1])
+                break
+        # if choice == choices[0]:  # addition
+        #     self.answer.set(str(Math().addition(self.numEnt.get(), self.numEnt2.get())))
+        # elif choice == choices[1]:  # cosine
+        #     self.answer.set(str(Math().cosine(self.numEnt.get())))
+        # elif choice == choices[2]:  # division
+        #     self.answer.set(str(Math().division(self.numEnt.get(), self.numEnt2.get())))
+        # elif choice == choices[3]:  # iqr
+        #     self.answer.set(str(Math().IQR(numList)))
+        # elif choice == choices[4]:  # mad
+        #     self.answer.set(str(Math().MAD(numList)))
+        # elif choice == choices[5]:  # mean
+        #     self.answer.set(str(Math().mean(numList)))
+        # elif choice == choices[6]:  # median
+        #     self.answer.set(str(Math().median(numList)))
+        # elif choice == choices[7]:  # multiplication
+        #     self.answer.set(str(Math().multiplication(self.numEnt.get(), self.numEnt2.get())))
+        # elif choice == choices[8]:  # power
+        #     self.answer.set(str(Math().power(self.numEnt.get(), self.numEnt2.get())))
+        # elif choice == choices[9]:  # remainder
+        #     self.answer.set(str(Math().remainder(self.numEnt.get(), self.numEnt2.get())))
+        # elif choice == choices[10]:  # sine
+        #     self.answer.set(str(Math().sine(self.numEnt.get())))
+        # elif choice == choices[11]:  # square root
+        #     self.answer.set(str(Math().square_root(self.numEnt.get())))
+        # elif choice == choices[12]:  # subtraction
+        #     self.answer.set(str(Math().subtraction(self.numEnt.get(), self.numEnt2.get())))
+        # elif choice == choices[13]:  # tangent
+        #     self.answer.set(str(Math().tangent(self.numEnt.get())))
+        self.numListSaved.clear()
 
 
 if __name__ == '__main__':
