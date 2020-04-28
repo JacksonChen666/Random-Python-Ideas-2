@@ -131,3 +131,4 @@ dmypy.json
 # other files
 *.gif
 .gif
+words_alpha.txt

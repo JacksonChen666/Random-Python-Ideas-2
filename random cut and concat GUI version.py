@@ -289,7 +289,8 @@ class tkWin:
         print("Importing...")
         self.statusUpdate("Importing...")
         from multiprocessing import cpu_count
-        import moviepy.editor, moviepy, random
+        import moviepy.editor
+        import random
 
         outputs = []
         print("Thread count of export process: {0}".format(str(cpu_count() * 2)))
