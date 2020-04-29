@@ -132,3 +132,5 @@ dmypy.json
 *.gif
 .gif
 words_alpha.txt
+solves.csv
+solves.json
