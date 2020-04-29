@@ -1,4 +1,6 @@
 """
+Also, i quit doing this from today to today because theres a thing
+
 valid keys:
 1245789-=qwertyuiop[]asfgjkl'zxcvbnm,./!@$%&*(_+QWERTYUIOP{}ASFGJKL"ZXCVBNM<>?
 invalid keys:
@@ -12,10 +14,13 @@ ctrl{a s} play normally with control held down or cap locks on
 shift{a s} play with shift (caps won’t work cause detection)
 the recorder records key presses and delays between each key and the hold time then saves to list
 """
+import random
 import re
 from time import sleep
 
 from pynput.keyboard import Controller, Key
+
+bpm = 100  # tf it's opposite i can't math
 
 
 def main():
@@ -35,13 +40,23 @@ def player(notes):
     sleep(1)
     k = Controller()
     for i in notes:
-        if str(i).islower():
-            k.type(i)
-        else:
+        if str(i) == " ":
+            pass
+        elif re.search("[,./'\[\]]+", i) or str(i).islower() or int(i):
+            k.press(i)
+            sleep(random.uniform(0.025, 0.050))
+            k.release(i)
+        elif not str(i).islower():
             k.press(Key.shift)
-            k.type(i)
+            sleep(random.uniform(0.025, 0.050))
+            k.press(i)
+            sleep(random.uniform(0.025, 0.050))
+            k.release(i)
+            sleep(random.uniform(0.025, 0.050))
             k.release(Key.shift)
-        sleep(0.25)
+        print(i, end="")
+        sleep(bpm / 60 / 10)
+    return True
 
 
 def hold(key, time, kba):
@@ -55,8 +70,12 @@ def delay(time):
 
 
 def readFile():
-    with open("Play.txt") as f:
-        return f.read()
+    try:
+        with open("Play.txt") as f:
+            return f.read()
+    except FileNotFoundError:
+        print("File not found, make sure your file is named \"Play.txt\". Using default notes.")
+        return "b b., m j jj, jvb bu7u7u b bu7u7u ccccbbbbvvvvmmmm,,,,,,,,,,,,b c"
 
 
 def recorder():
