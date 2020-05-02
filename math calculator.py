@@ -6,15 +6,18 @@ import re
 import statistics
 import tkinter as tk
 
+numListSaved = []
+
 
 class GUIAndMath:
+    global numListSaved
+
     def __init__(self):
         """
         The GUI mainly for people who doesn't know how to
         """
         global numListSaved, allowSave, onTop, choices
         super().__init__()
-        self.numListSaved = []
         allowSave = True
         onTop = False
         self.window = tk.Tk()
