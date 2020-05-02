@@ -2,7 +2,6 @@ import atexit
 import logging
 import random
 import threading
-import time
 
 from PIL import Image, ImageDraw
 

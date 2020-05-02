@@ -1,4 +1,3 @@
-import threading
 from time import sleep
 
 from pynput.keyboard import (Controller as kController, Listener as kListener)
@@ -23,7 +22,7 @@ def on_move(x, y):
 
 
 def on_click(x, y, q, w):
-    print(x,y,q,w)
+    print(x, y, q, w)
 
 
 def on_press(key):

@@ -1,4 +1,4 @@
-import random, re
+import random
 
 
 def words(wordsAmount):

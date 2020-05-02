@@ -21,23 +21,24 @@ iMultiplier -- How much to multiply by intensity
 """
 
 if __name__ == '__main__':
-	from random import uniform
-	from time import sleep
-	from pynput.mouse import Controller
-	from math import isinf
-	mouse = Controller()
-	intensity = 0.001
-	startInt = intensity
-	iMultiplier = 1.001
-	# increases by: intensity * iMultiplier
-	try:
-		while True:
-			if isinf(intensity):
-				intensity = startInt
-			print("\r{0}	pixels max/move".format(intensity), end="")
-			for i in range(5):
-				mouse.move(uniform(-intensity, intensity), uniform(-intensity, intensity))
-				sleep(uniform(0.1, 0.0001))
-			intensity *= iMultiplier
-	except KeyboardInterrupt:
-		exit()
+    from random import uniform
+    from time import sleep
+    from pynput.mouse import Controller
+    from math import isinf
+
+    mouse = Controller()
+    intensity = 0.001
+    startInt = intensity
+    iMultiplier = 1.001
+    # increases by: intensity * iMultiplier
+    try:
+        while True:
+            if isinf(intensity):
+                intensity = startInt
+            print("\r{0}	pixels max/move".format(intensity), end="")
+            for i in range(5):
+                mouse.move(uniform(-intensity, intensity), uniform(-intensity, intensity))
+                sleep(uniform(0.1, 0.0001))
+            intensity *= iMultiplier
+    except KeyboardInterrupt:
+        exit()

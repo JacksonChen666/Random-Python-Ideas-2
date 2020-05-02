@@ -133,7 +133,8 @@ class GUIAndMath:
         if re.search("[\n|\r]", event.char):
             print("\n", end="")
             self.calculate()
-        elif event.char == "": self.clearList()
+        elif event.char == "":
+            self.clearList()
         if allowSave:
             if event.char == " ": self.saveNum()
         print("{0}".format(event.char), end="")
@@ -170,10 +171,13 @@ class GUIAndMath:
         self.setList()
         self.answer.set("")
 
-        if re.search("Mean|MAD|Median|IQR", choice): self.extraNumsState(choice, True, False)
-        elif re.search("Power|Addition|Subtraction|Multiplication|Division|Remainder", choice): self.extraNumsState(
-            choice, False, True)
-        elif re.search("Square Root|Cosine|Sine|Tangent", choice): self.extraNumsState(choice, False, False)
+        if re.search("Mean|MAD|Median|IQR", choice):
+            self.extraNumsState(choice, True, False)
+        elif re.search("Power|Addition|Subtraction|Multiplication|Division|Remainder", choice):
+            self.extraNumsState(
+                choice, False, True)
+        elif re.search("Square Root|Cosine|Sine|Tangent", choice):
+            self.extraNumsState(choice, False, False)
 
     def extraNumsState(self, answerType, saveState, extraNums, num1Lbl="Number 1", num2Lbl="Number 2"):
         """
@@ -219,14 +223,16 @@ class GUIAndMath:
         """
         global numListSaved
         if allowSave and self.numEnt != "" and self.numEnt2 != "":
-            try: self.numListSaved.append(float(self.numEnt.get()))
+            try:
+                self.numListSaved.append(float(self.numEnt.get()))
             except ValueError:
                 self.numVar.set("")
                 return False
             self.numVar.set("")
             self.setList()
             return True
-        else: return False
+        else:
+            return False
 
     def calculate(self):
         """
@@ -323,9 +329,11 @@ class GUIAndMath:
         tempMean = float(self.mean(numList))  # get mean of list
         tempList = []
         for num in numList:
-            if num > tempMean: tempList.append(float(num - tempMean))  # subtract the mean and then number or the
+            if num > tempMean:
+                tempList.append(float(num - tempMean))  # subtract the mean and then number or the
             # other way if its bigger
-            elif num < tempMean: tempList.append(float(tempMean - num))
+            elif num < tempMean:
+                tempList.append(float(tempMean - num))
         tempList.sort()
         return self.mean(tempList)  # get the mean
 
@@ -407,21 +415,29 @@ class GUIAndMath:
         lowerList = []
         higherList = []
         for i in range(len(numList)):
-            if i < lowerListChoice: lowerList.append(numList[i])
-            elif i > higherListChoice: higherList.append(numList[i])
-            elif i == lowerListChoice or i == higherListChoice: pass
+            if i < lowerListChoice:
+                lowerList.append(numList[i])
+            elif i > higherListChoice:
+                higherList.append(numList[i])
+            elif i == lowerListChoice or i == higherListChoice:
+                pass
         lowerList.sort()
         higherList.sort()
         lowerMedian = self.median(lowerList)
         higherMedian = self.median(higherList)
-        if lowerMedian > higherMedian: return lowerMedian - higherMedian
-        elif higherMedian > lowerMedian: return higherMedian - lowerMedian
+        if lowerMedian > higherMedian:
+            return lowerMedian - higherMedian
+        elif higherMedian > lowerMedian:
+            return higherMedian - lowerMedian
 
     def rounding(self, num=None, upDown=None):
         if num is None: num = self.numEnt.get()
-        if upDown.lower() == "up": return math.ceil(num)
-        elif upDown.lower() == "down": return math.floor(num)
-        elif upDown is None: return roung(num)
+        if upDown.lower() == "up":
+            return math.ceil(num)
+        elif upDown.lower() == "down":
+            return math.floor(num)
+        elif upDown is None:
+            return roung(num)
 
 
 if __name__ == '__main__':
