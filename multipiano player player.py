@@ -7,16 +7,17 @@ valid keys:
 invalid keys:
 360dh;#^)_|DH:/space//newline/ and everything else outside of the qwerty keyboard
 a presses a that's all
-a[150] press a, and hold it for 150ms
-(as) is grouped notes that play together
+a[150] hold key a for 150ms
+a [150] a then delay 150ms
+(as) together notes
 ctrl{a s} play normally with control held down or cap locks on
 shift{a s} play with shift (cap characters are possible, but it can break)
-the recorder records key presses and delays between each key and the hold time then saves to list
+the recorder records key presses and delays between each key and the hold time then saves to list then writes them down
 """
 import random
 import re
-from time import sleep
 
+from time import sleep
 from pynput.keyboard import Controller, Key, Listener
 
 bpm = 100
@@ -71,26 +72,27 @@ def readFile():
 
 
 def recorder():
-    with open("Play.txt", "w") as useless101: pass
+    with open("Play.txt", "w"): pass
+    print("Recording...")
     with Listener(on_release=writeToFile) as h: h.join()
 
 
 def writeToFile(text):
     with open("Play.txt", "a") as append:
-        with open("Play.txt", "r+") as rewrite:
-            try:
-                if re.search("(?:[^360\\\dh;#^)_|DH:{}\n])", text.char): append.write(str(text.char))
-            except AttributeError:
-                if text == Key.space:
-                    append.write(" ")
-                elif text == Key.backspace:
+        try:
+            if re.search("(?:[^360\\\dh;#^)_|DH:{}\n])", text.char): append.write(str(text.char))
+        except AttributeError:
+            if text == Key.space:
+                append.write(" ")
+            elif text == Key.backspace:
+                with open("Play.txt", "r+") as rewrite:
                     rewrite.write(rewrite.read()[:-1])
-                elif text == Key.enter:
-                    append.write("\n")
-                elif text == Key.esc:
-                    return False  # stop listener
-                else:
-                    print("Oops, invalid character, character is {}".format(str(text)))
+            elif text == Key.enter:
+                append.write("\n")
+            elif text == Key.esc:
+                return False  # stop listener
+            else:
+                print("Oops, invalid character, character is {}".format(str(text)))
 
 
 if __name__ == '__main__':

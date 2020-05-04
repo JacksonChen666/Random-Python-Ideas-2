@@ -1,7 +1,7 @@
 import tkinter as tk
 
 
-class Main():
+class Main:
     def __init__(self):
         super().__init__()
         # main stuff
