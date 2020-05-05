@@ -4,7 +4,7 @@ import multiprocessing as mp
 from time import sleep
 
 t = []
-processes = 8
+processes = 16
 
 
 def start():

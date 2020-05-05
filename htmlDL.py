@@ -92,8 +92,6 @@ def treeDownload(fullURL, allowExternalDomains=False):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(
-        level=logging.DEBUG,
-    )
+    logging.basicConfig(level=logging.DEBUG)
     print("Hello there, console")
     download("https://jacksonchen666.github.io/", fileLoc="Downloads")
