@@ -41,23 +41,6 @@ def fileprompt(title):
     return file
 
 
-# def plusMinusOnly(text):  # i do have to constantly loop to check but i do work properly
-#     asciiLetters = convertToASCII(text)
-#     cNum = 0
-#     code = ""
-#     for i in asciiLetters:
-#         while cNum != i:
-#             if cNum < i:
-#                 code += "+"
-#                 cNum += 1
-#             elif cNum > i:
-#                 code += "-"
-#                 cNum -= 1
-#         code += "."
-#     print("ASCII:\n{}\nBrainfuck code:\nSTART-OF-FILE\n{}\nEND-OF-FILE".format(asciiLetters, code))
-#     return code
-
-
 def plusMinusOnly2(text):
     asciiLetters = convertToASCII(text)
     cNum = 0
