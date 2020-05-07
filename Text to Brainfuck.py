@@ -41,25 +41,32 @@ def fileprompt(title):
     return file
 
 
-def plusMinusOnly2(text):
+def plusMinusOnly(text):
     asciiLetters = convertToASCII(text)
     cNum = 0
     code = ""
     for i in asciiLetters:
         if cNum < i:
             e = i - cNum
+            cNum += e
             for r in range(e):
                 code += "+"
-            cNum += e
-            print(e, i, cNum)
         elif cNum > i:
             e = cNum - i
+            cNum -= e
             for r in range(e):
                 code += "-"
-            cNum -= e
-            print(e, i, cNum)
         code += "."
     print("ASCII:\n{}\nBrainfuck code:\nSTART-OF-FILE\n{}\nEND-OF-FILE".format(asciiLetters, code))
+    return code
+
+
+def withLoops(text):
+    asciiLetters = convertToASCII(text)
+    cNum = 0
+    code = ''
+    for i in range(10):
+        pass
     return code
 
 
