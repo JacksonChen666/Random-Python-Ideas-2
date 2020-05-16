@@ -135,3 +135,7 @@ dmypy.json
 *.csv
 *.json
 words_alpha.txt
+*.bf
+.bf
+.ogg
+*.ogg

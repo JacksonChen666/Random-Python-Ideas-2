@@ -7,11 +7,12 @@ from tkinter import filedialog
 from tkinter.simpledialog import askstring
 from platform import system
 Tk().withdraw()
-replaceThe, fileExtension, directory, replaceWith = False, False, False, ""
+replaceThe, fileExtension, directory = False, False, False
 while not directory: directory = str(filedialog.askdirectory())
 while not fileExtension: fileExtension = askstring("File extension", "What file extension are you looking for")
 while not replaceThe: replaceThe = askstring("Replace", "What would you want to replace?")
 replaceWith = askstring("Replace With", "What would you want to replace with?")
+if replaceWith is None: replaceWith = ""
 if system() == "Darwin" or system() == "Linux": slash = "/"
 elif system() == "Windows": slash = "\\"
 # noinspection PyUnboundLocalVariable

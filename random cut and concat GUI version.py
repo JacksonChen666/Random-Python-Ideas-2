@@ -108,7 +108,7 @@ class tkWin:
         # Start the window
         self.window.mainloop()
 
-    def statusUpdate(self, statusText, allowPrint):
+    def statusUpdate(self, statusText, allowPrint=False):
         """
         Changes the status text.
         :param statusText: What text to change to.
@@ -116,12 +116,8 @@ class tkWin:
         :return: Nothing
         """
         self.varStatus.set(statusText)
-        if allowPrint:
-            print(statusText)
+        if allowPrint: print(statusText)
         return
-
-    def validate(self):
-        pass
 
     def selectFolder(self):
         """
@@ -131,36 +127,32 @@ class tkWin:
         global t
         import threading
         import os
-        try:  # Validation
-            if t.is_alive():
-                return
-        except NameError:
-            pass
-        try:
+        if self.folder_selected: return False
+        try:  # validate the nums
             int(self.varXdim.get())
-            int(self.varXdim.get())
+            int(self.varYdim.get())
             float(self.varMinLen.get())
             float(self.varMaxLen.get())
             int(self.varRepeats.get())
             int(self.varDiscard.get())
         except ValueError:
-            self.statusUpdate("Error:\nCan't convert some inputs. Check your inputs", False)
+            self.statusUpdate("Error:\nCan't convert some inputs. Check your inputs")
+            logging.warning("Can't convert some inputs. Check your inputs")
             self.window.update()
             return False
         self.window.update()
         self.folder_selected = filedialog.askdirectory(title="Directory of the videos")
-        if self.folder_selected == '' and not os.path.isfile(self.folder_selected):
-            return False
-        print(self.folder_selected + "/")
-        self.statusUpdate("Processing... If this does not change, there might be an error.", False)
-
         self.window.update()
+        if self.folder_selected == '' and not os.path.isfile(self.folder_selected):
+            self.window.update()
+            self.window.focus_force()
+            return False
+        print(self.folder_selected)
+        self.statusUpdate("Processing... If this does not change, there might be an error.")
 
         t = threading.Thread(target=self.processing, args=(
             self.folder_selected, self.xdim.get(), self.ydim.get(), self.minLen.get(), self.maxLen.get(),
-            self.repeats.get(), self.varDiscard.get(), self.varPreset.get()), daemon=True)
-        t.setDaemon(True)
-        t.start()
+            self.repeats.get(), self.varDiscard.get(), self.varPreset.get()), daemon=True).start()
         return True
 
     def installLibraries(self):
@@ -243,33 +235,36 @@ class tkWin:
         :param ffmpeg_preset: FFmpeg compression preset (Refer to FFmpeg).
         :return: A Video.
         """
-        global collages
         self.installBtn.destroy()  # i've warned you, that you have installed it!!
+        from platform import system
         import os, random
+        if system() == "Linux" or system() == "Darwin":
+            directory += "/"
+        elif system() == "Windows":
+            directory += "\\"
 
         # compile list of videos
         videoFormats = ('.mp4', '.mkv', '.webm', '.mov', '.flv', '.avi', '.m4a', '.m4v', '.f4v', '.f4a')
         clips = [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith(videoFormats) and
                  os.path.isfile(os.path.join(directory, f)) and f != "FINAL.MP4"]
-        logging.notset("Clips: {}".format(clips))
+        logging.debug("Clips: {}".format(clips))
         inputs = [q for i in range(int(repeats)) for q in clips if random.randint(0, 100) >= float(
             discardedClipsPercent)]  # randomly selects from original full list
         random.shuffle(inputs)
-        logging.notset("Randomly selected clips: {}".format(inputs))
+        logging.debug("Randomly selected clips: {}".format(inputs))
         if 500 < len(inputs) < 10000:
             logging.warning("Exceeded normal limit of 500, might be dangerous if it takes over system ram")
             if messagebox.askokcancel("a lotta clips",
-                                      "There could be up to {0} clips, and it can cause problems with "
-                                      "memory. Would you like to continue?".format(len(clips * int(repeats)))):
+                                      "There is a total of {0} clips used for concat. Are you sure to continue?".format(len(clips * int(repeats)))):
                 pass
             else:
-                self.statusUpdate("Waiting for folder to be selected...", False)
+                self.statusUpdate("Waiting for folder to be selected...")
                 return
         elif len(inputs) > 10000:
             logging.warning("Exceeded max limit of 10000, that's too dangerous")
-            self.statusUpdate("Waiting for folder to be selected...", False)
+            self.statusUpdate("Waiting for folder to be selected...")
             messagebox.showwarning("WAY too many clips", "{0} is too many clips. The hard limit is 10000 "
-                                                         "clips.".format(len(clips) * int(repeats)))
+                                                         "clips. Try lowering repeats and increasing discards".format(len(clips) * int(repeats)))
             return
         self.changeButtons("disabled")
         self.statusUpdate("Importing...", True)
@@ -281,7 +276,7 @@ class tkWin:
 
         outputs = []
         self.statusUpdate("Thread count of export process: {0}".format(str(cpu_count() * 2)), True)
-        self.statusUpdate("Cutting...", False)
+        self.statusUpdate("Cutting...")
         for i in inputs:
             logging.info("\rCutting {}".format(i))
 
@@ -296,24 +291,19 @@ class tkWin:
             try:
                 outputs.append(clip.subclip(start, start + length))
             except OSError:
-                self.statusUpdate("oops! error:\n{}".format(tc.format_exc()), False)
+                self.statusUpdate("oops! error:\n{}\ncontinuing".format(tc.format_exc()))
                 logging.exception("Exception: {}".format(tc.print_exc()))
                 pass
-        self.statusUpdate("Concatenating...", True)
+        self.statusUpdate("Writing... Thread count: {0}.".format(str(cpu_count() * 2)))
         # combine clips from different videos
-        collage = concatenate_videoclips(outputs)
-        self.statusUpdate("Writing... Thread count: {0}.".format(str(cpu_count() * 2)), True)
-        collage.write_videofile(directory + '/FINAL.MP4', threads=cpu_count() * 2, preset=ffmpeg_preset)
-        print("Done")
-        self.statusUpdate("Done\nReopen the app to avoid memory problems", False)
+        concatenate_videoclips(outputs).write_videofile(directory + 'FINAL.MP4', threads=cpu_count() * 2,
+                                                        preset=ffmpeg_preset)
+        self.statusUpdate("Done", True)
         self.changeButtons("normal")
         self.folder_selected = ""
-        collage.close()  # clean up
         return outputs
 
 
 if __name__ == '__main__':
-    logging.basicConfig(
-        level=logging.DEBUG
-    )
+    logging.basicConfig(level=logging.DEBUG)
     windows = tkWin()

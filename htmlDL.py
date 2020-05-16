@@ -23,8 +23,8 @@ def download(fullURL, fileName=None, fileLoc="."):
     logging.debug("Filename checks...")
     if fileName is None:
         removeText = ["['<title>", "</title>']"]
-        if re.findall('<title>[^*"?·<>]+</title>', x.text, re.IGNORECASE) != '':
-            fileName = str(re.findall('<title>[^*"?·<>]+</title>', x.text, re.IGNORECASE))
+        if re.findall('<title>.*</title>', x.text, re.IGNORECASE) != '':
+            fileName = str(re.findall('<title>.*</title>', x.text, re.IGNORECASE))
         for i in removeText:
             fileName = fileName.replace(i, "")
     if fileLoc != "." and not os.path.isdir(fileLoc):
