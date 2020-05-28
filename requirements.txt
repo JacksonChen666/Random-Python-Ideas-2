@@ -4,3 +4,4 @@ Pillow
 DateTime
 requests
 pygame
+PyAutoGUI

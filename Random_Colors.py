@@ -56,7 +56,7 @@ def startup(widths=width, heights=height, frames=amountOfImages, loggingLevel=lo
     setup(widths=widths, heights=heights, frames=frames, loggingLevel=loggingLevel)
     for i in range(amountOfImages):
         threads.append(threading.Thread(target=randomImage))
-        threads[i].start()
+        threads[i].times()
         logging.info("Started Thread-{}".format(i + 1))
     logging.info("All {} threads started".format(amountOfImages))
     TIA = True

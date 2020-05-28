@@ -23,10 +23,11 @@ def displaytext(text, copyToClipboard=False):
         root.clipboard_append(text)
         root.update()
         Label(root, text="(Copied to Clipboard)\nBrainfuck code:").pack()
-    else: Label(root, text="Brainfuck code:").pack()
+    else:
+        Label(root, text="Brainfuck code:").pack()
     textbox = Text(root, wrap="word", width=50, height=10)
     textbox.insert("end", str(text))
-    textbox.bind("<Key>", lambda e: "break")
+    textbox.bind("<Key>", lambda e:"break")
     textbox.pack()
     Button(root, text="Exit", command=root.quit).pack()
     root.mainloop()
@@ -60,21 +61,24 @@ def plusMinusOnly(text):
             cNum -= e
             for r in range(e): code += "-"
         code += "."
-    code += "[-]"
-    print("ASCII:\n{}\nASCII modified: {}\nBrainfuck code:\nSTART-OF-FILE\n{}\nEND-OF-FILE".format(ASCIILetters,
-                                                                                                   minimizedASCIILetters,
-                                                                                                   code))
+    print("ASCII: {}\nASCII Minified: {}\nBrainfuck code:\nSTART-OF-FILE\n{}\nEND-OF-FILE".format(ASCIILetters,
+                                                                                                  minimizedASCIILetters,
+                                                                                                  code))
     return code
 
 
 def withLoops(text):
-    asciiLetters, minimizedASCIILetters, cNum, listNums, listNums2, code = convertToASCII(text), convertToMinimisedASCII(
+    asciiLetters, minimizedASCIILetters, cNum, listNums, listNums2, code = convertToASCII(
+        text), convertToMinimisedASCII(
         text), 0, [], [], ''
     print(asciiLetters)
     for i in asciiLetters:
-        # yes use loops, but make sure to emulate the way it's done, and round up or down to 10ths and make a normal and doing it list
-        if cNum < i: pass
-        elif cNum > i: pass
+        # yes use loops, but make sure to emulate the way it's done, and round up or down to 10ths and make a normal
+        # and doing it list
+        if cNum < i:
+            pass
+        elif cNum > i:
+            pass
         code += "."
     print("ASCII:\n{}\nASCII modified: {}\nBrainfuck code:\nSTART-OF-FILE\n{}\nEND-OF-FILE".format(ASCIILetters,
                                                                                                    minimizedASCIILetters,
