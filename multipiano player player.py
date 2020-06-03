@@ -16,8 +16,8 @@ the recorder records key presses and delays between each key and the hold time t
 """
 import random
 import re
-
 from time import sleep
+
 from pynput.keyboard import Controller, Key, Listener
 
 bpm = 100
@@ -64,8 +64,7 @@ def hold(key, time, kba):
 
 def readFile():
     try:
-        with open("Play.txt") as f:
-            return f.read()
+        return open("Play.txt").read()
     except FileNotFoundError:
         print("File not found, make sure your file is named \"Play.txt\". Using default notes.")
         return "b b., m j jj, jvb bu7u7u b bu7u7u ccccbbbbvvvvmmmm,,,,,,,,,,,,b c"

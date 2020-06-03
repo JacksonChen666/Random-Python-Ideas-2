@@ -129,13 +129,9 @@ dmypy.json
 .pyre/
 
 # other files
-*.gif
-.gif
-*.txt
-*.csv
-*.json
-words_alpha.txt
-*.bf
-.bf
-.ogg
-*.ogg
+*
+!*.py
+!*.md
+!requirements.txt
+!LICENSE
+!.gitignore

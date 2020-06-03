@@ -110,16 +110,12 @@ class GUIAndMath:
     def floatingWin(self):
         global onTop
         self.window.lift()
-        if onTop:
-            self.window.attributes('-topmost', False)
-            onTop = False
-        elif not onTop:
-            self.window.attributes('-topmost', True)
-            onTop = True
+        onTop = not onTop
+        self.window.attributes('-topmost', onTop)
         self.window.update()
 
     def validation(self, text, setting):
-        if not re.search("\d+|(?:\d)*\.(?:\d)+", text):
+        if not re.search("\d+|\d*\.\d+", text):
             setting.set("")
             self.setList()
             return False
@@ -160,6 +156,7 @@ class GUIAndMath:
             self.numListSaved.clear()
             self.varNumList.set(self.numListSaved)
 
+    # noinspection PyUnusedLocal,PyUnusedLocal,PyUnusedLocal
     def choiceCheck(self, i=None, d=None, c=None):
         """
         Check choices and stuff
@@ -177,8 +174,7 @@ class GUIAndMath:
         if re.search("Mean|MAD|Median|IQR", choice):
             self.extraNumsState(choice, True, False)
         elif re.search("Power|Addition|Subtraction|Multiplication|Division|Remainder", choice):
-            self.extraNumsState(
-                choice, False, True)
+            self.extraNumsState(choice, False, True)
         elif re.search("Square Root|Cosine|Sine|Tangent", choice):
             self.extraNumsState(choice, False, False)
 
@@ -320,7 +316,8 @@ class GUIAndMath:
         :return: Number
         """
         if numList is None: numList = self.numListSaved
-        return float(statistics.mean(numList))
+        # return float(statistics.mean(numList))
+        return sum(numList) / len(numList)
 
     def MAD(self, numList=None):
         """
@@ -332,6 +329,7 @@ class GUIAndMath:
         tempMean = float(self.mean(numList))  # get mean of list
         tempList = []
         for num in numList:
+            # tempList.append(float(num - tempMean) if num > tempMean else float(tempMean - num))
             if num > tempMean:
                 tempList.append(float(num - tempMean))  # subtract the mean and then number or the
             # other way if its bigger
@@ -418,16 +416,16 @@ class GUIAndMath:
         lowerList = []
         higherList = []
         for i in range(len(numList)):
-            if i < lowerListChoice:
+            # cannot ignore middle numbers
+            if i <= lowerListChoice:
                 lowerList.append(numList[i])
-            elif i > higherListChoice:
+            elif i >= higherListChoice:
                 higherList.append(numList[i])
-            elif i == lowerListChoice or i == higherListChoice:
-                pass
         lowerList.sort()
         higherList.sort()
         lowerMedian = self.median(lowerList)
         higherMedian = self.median(higherList)
+        # return lowerMedian - higherMedian if lowerMedian > higherMedian else higherMedian - lowerMedian
         if lowerMedian > higherMedian:
             return lowerMedian - higherMedian
         elif higherMedian > lowerMedian:
@@ -440,7 +438,7 @@ class GUIAndMath:
         elif upDown.lower() == "down":
             return math.floor(num)
         elif upDown is None:
-            return roung(num)
+            return round(num)
 
 
 if __name__ == '__main__':

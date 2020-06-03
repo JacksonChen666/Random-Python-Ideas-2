@@ -1,29 +1,22 @@
 #!/usr/bin/python3
-# this is used for my website, actually, because i have to constantly do the same thing over and over again (change nav
-# menu icons or copy and paste)
-import os, shutil as st
+# now ineffective because sublime and jetbrain editors have them
+import os
+import shutil as st
 from tkinter import *
 from tkinter import filedialog
 from tkinter.simpledialog import askstring
-from platform import system
+
 Tk().withdraw()
-replaceThe, fileExtension, directory = False, False, False
+replaceThe, fileExtension, directory = None, None, None
 while not directory: directory = str(filedialog.askdirectory())
 while not fileExtension: fileExtension = askstring("File extension", "What file extension are you looking for")
 while not replaceThe: replaceThe = askstring("Replace", "What would you want to replace?")
 replaceWith = askstring("Replace With", "What would you want to replace with?")
 if replaceWith is None: replaceWith = ""
-if system() == "Darwin" or system() == "Linux": slash = "/"
-elif system() == "Windows": slash = "\\"
-# noinspection PyUnboundLocalVariable
-directory += slash
 files = [i for i in os.listdir(directory) if i.endswith(fileExtension)]
-try: os.mkdir(directory + "BACKUP")
-except FileExistsError:
-    st.rmtree(directory + "BACKUP")
-    os.mkdir(directory + "BACKUP")
+if os.path.isdir(os.path.join(directory, "BACKUP")): st.rmtree(os.path.join(directory, "BACKUP"))
+os.mkdir(os.path.join(directory, "BACKUP"))
 for i in files:
-    st.copyfile(directory + i, directory + "BACKUP" + slash + i)
-    with open(directory + i) as w: text = w.read()
-    replacedText = text.replace(replaceThe, replaceWith)
-    with open(directory + i, "w") as q: q.write(text)
+    st.copyfile(os.path.join(directory, i), os.path.join(directory, "BACKUP", i))
+    replacedText = open(os.path.join(directory, i)).read().replace(replaceThe, replaceWith)
+    open(os.path.join(directory, i), "w").write(replacedText)
