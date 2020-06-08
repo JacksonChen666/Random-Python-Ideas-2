@@ -9,10 +9,11 @@ def safe_eval(expression):
         "min": min,
         "sorted": sorted,
     }
-    for name in compile(expression, "<string>", "eval").co_names:
+    complied = compile(expression, "<string>", "eval")
+    for name in complied.co_names:
         if name not in safe_expressions:
             raise NameError(f"A unsafe expression '{name}' has been found during evaluation")
-    return eval(expression, {"__builtins__": {}}, safe_expressions)
+    return eval(complied, {"__builtins__": {}}, safe_expressions)
 
 
 class GUI:
@@ -35,12 +36,12 @@ class GUI:
         self.numEnt.grid(row=0, column=1, pady=5)
         self.finalLbl.grid(row=1, column=0, pady=5, sticky="e")
         self.finalEnt.grid(row=1, column=1, pady=5)
-        self.calcBtn.grid(row=2, column=0, columnspan=2, sticky="nesw")
+        self.calcBtn.grid(row=2, column=0, sticky="nesw", columnspan=2)
 
         self.numEnt.bind("<Return>", self.calculate)
         self.window.mainloop()
 
-    def calculate(self, key):
+    def calculate(self, e):
         if self.numEnt.get():
             ans = safe_eval(self.numEnt.get())
             self.finalEnt.config(text=ans)

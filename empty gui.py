@@ -1,5 +1,1 @@
-import tkinter as tk
-
-root = tk.Tk()
-
-root.mainloop()
+__import__("tkinter").Tk().mainloop()

@@ -97,8 +97,8 @@ class GUIAndMath:
         self.calcs.add_command(label="Save Number", command=self.saveNum)
         self.calcs.add_command(label="Clear List", command=self.clearList)
 
-        self.calcs.entryconfig(2, state="disabled")
-        self.calcs.entryconfig(3, state="disabled")
+        self.calcs.entryconfig(2, state="isDisabled")
+        self.calcs.entryconfig(3, state="isDisabled")
 
         self.menubar.add_cascade(label="Math", menu=self.calcs)
 
@@ -193,7 +193,7 @@ class GUIAndMath:
             self.numEnt2.config(state="normal")
             self.numLbl2.config(text="{0}:".format(num2Lbl))
         elif not extraNums:
-            self.numEnt2.config(state="disabled")
+            self.numEnt2.config(state="isDisabled")
             self.numLbl2.config(text="No extra nums")
             self.numVar2.set("")
         self.numLbl.config(text="{0}:".format(num1Lbl))

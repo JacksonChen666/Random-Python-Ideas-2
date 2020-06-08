@@ -1,59 +1,51 @@
-# only need to install pynput but its automated already
+"""
+macOS: 0.5 pixel sensitivity
+Windows and Linux: 1 pixel sensitivity
+macOS:
+Trial and error
+Windows notes:
+Mouse definitely got slowed down (anti virus)
+Linux notes:
+Only top and left side of the screen
+"""
 import datetime
 import tkinter as tk
 from platform import system
 
-try:
-    from pynput import mouse, keyboard
-    from pynput.keyboard import Key
-except ImportError:
-    from subprocess import run
-
-    print("If you have an antivirus, the library installation process maybe blocked or thrown sandbox to confirm it "
-          "does not do any harm. If the installation process is blocked, please manually install the following "
-          "libraries: pynput")
-    try:
-        print("Attempting to install library with pip...")
-        run("pip install pynput", shell=True, check=True)
-    except:
-        print("Attempting to install library with pip3...")
-        run("pip3 install pynput", shell=True, check=True)
-    finally:
-        from pynput import mouse, keyboard
-        from pynput.keyboard import Key
-
-        print("Done")
+from pynput import keyboard, mouse
+from pynput.keyboard import Key
 
 # The key combinations to check
-COMBINATIONS = [{keyboard.Key.ctrl, keyboard.Key.esc}, {keyboard.Key.alt, keyboard.Key.esc}]
-
 # pixels away from side
-awayFrom = 3
-
 # The currently active modifiers
-current = set()
-
-up, down, left, right = "↑", "↓", "←", "→"
-tNow = datetime.datetime.now()
-tCounter = 0
-
 # screen size to check for edge
-screen_width, screen_height = tk.Tk().winfo_screenwidth(), tk.Tk().winfo_screenheight()
+COMBINATIONS, awayFrom, current, tNow, tCounter, up, down, left, right, screen_width, screen_height = [{
+    keyboard.Key.shift,
+    keyboard.Key.esc}], 3, set(), datetime.datetime.now(), 0, "↑", "↓", "←", "→", tk.Tk().winfo_screenwidth(), \
+                                                                                                      tk.Tk().winfo_screenheight()
 
 
-def toLeft(): mouse.Controller().move(-screen_width - awayFrom, 0); print(left, end=" ")
+def to_left():
+    mouse.Controller().move(-screen_width - awayFrom, 0)
+    print(left, end=" ", flush=True)
 
 
-def toRight(): mouse.Controller().move(screen_width - awayFrom, 0); print(right, end=" ")
+def to_right():
+    mouse.Controller().move(screen_width - awayFrom, 0)
+    print(right, end=" ", flush=True)
 
 
-def toUp(): mouse.Controller().move(0, screen_height - awayFrom); print(up, end=" ")
+def to_up():
+    mouse.Controller().move(0, screen_height - awayFrom)
+    print(up, end=" ", flush=True)
 
 
-def toDown(): mouse.Controller().move(0, -screen_height - awayFrom); print(down, end=" ")
+def to_down():
+    mouse.Controller().move(0, -screen_height - awayFrom)
+    print(down, end=" ", flush=True)
 
 
-def exitCheck(key):
+def exit_check(key):
     global current, COMBINATIONS
     # https://github.com/moses-palmer/pynput/issues/20#issuecomment-412714960
     if any([key in comb for comb in COMBINATIONS]):
@@ -71,91 +63,47 @@ def exitCheck(key):
                 current = set()
 
 
-def moveTo(x, y, pixelSen=0.5):
+def move_to(x, y, pixelSen=1):
     if allowed:
         if -pixelSen <= x <= pixelSen:
-            toRight()
+            to_right()
         elif screen_width - pixelSen <= x < screen_width + pixelSen:
-            toLeft()
+            to_left()
         elif -pixelSen <= y <= pixelSen:
-            toUp()
+            to_up()
         elif screen_height + pixelSen > y >= screen_height - pixelSen:
-            toDown()
-
-
-def on_move(x, y): moveTo(x, y)
-
-
-def on_press(key): pass
+            to_down()
 
 
 def on_release(key):
+    global allowed
     if key == Key.ctrl_r or key == Key.cmd_r:
-        global allowed
         allowed = not allowed
         if allowed:
             print("\nSoftware control gained")
         else:
             print("\nSoftware control lost")
-    return exitCheck(key)
+    return exit_check(key)
 
 
-def mac_on_release(key):
-    if key == Key.cmd_r:
-        global allowed
-        allowed = not allowed
-        if allowed:
-            print("\nSoftware control gained")
-        else:
-            print("\nSoftware control lost")
-    return exitCheck(key)
-
-
-def win_on_move(x, y): moveTo(x, y, 1)
-
-
-def win_on_press(key): on_press(key)
-
-
-def win_on_release(key):
-    global allowed, COMBINATIONS
-    COMBINATIONS = [{keyboard.Key.shift, keyboard.Key.esc}]
-    if key == Key.ctrl_r:
-        allowed = not allowed
-        if allowed:
-            print("Software control gained")
-        else:
-            print("\nSoftware control lost")
-    return exitCheck(key)
-
-
-def start(Windows=False, macOS=False, Linux=False):
-    global L
-    if Windows:
-        keyboard.Listener(on_release=win_on_release, on_press=win_on_press).start()
-        with mouse.Listener(on_move=win_on_move) as L:
-            L.join()
-    elif macOS:
-        keyboard.Listener(on_release=mac_on_release, on_press=on_press).start()
-        with mouse.Listener(on_move=on_move) as L:
-            L.join()
-    else:
-        keyboard.Listener(on_release=on_release, on_press=on_press).start()
-        with mouse.Listener(on_move=on_move) as L:
-            L.join()
+def start(macOS=False):
+    global L, COMBINATIONS
+    if macOS: COMBINATIONS = [{keyboard.Key.ctrl, keyboard.Key.esc}, {keyboard.Key.alt, keyboard.Key.esc}]
+    keyboard.Listener(on_release=on_release).start()
+    with mouse.Listener(on_move=move_to) as L:
+        L.join()
 
 
 if __name__ == '__main__':
-    s, allowed, text = 1, True, "Initialized\nUse right control/right command to pause/resume\nQuit combination:"
-    if system() == "Darwin":
+    s, allowed, text, sys, isMacOS = 1, True, "Initialized\nUse right control/right command to pause/resume\nQuit " \
+                                              "combination:", system(), False
+    if sys == "Darwin":
         print("Mac, Stable\n{0}\nCtrl+Esc then Alt+Esc".format(text))
-        start(macOS=True)
-    elif system() == "Windows":
-        print("Windows\nThis is unstable\n{0}\nShift+Esc".format(text))
-        start(Windows=True)
-    elif system() == "Linux":
-        print("Linux\nUntested, unstable, and unfinished. It will not work yet\n{0}".format(text))
-        start(Linux=True)
+        isMacOS = True
+    elif sys == "Windows":
+        print("Windows\nThis is maybe unstable\n{0}\nShift+Esc".format(text))
+    elif sys == "Linux":
+        print("Linux\nUntested, unstable, and unfinished. It will not work yet\n{0}Shift+Esc".format(text))
     else:
         print("System unknown, this might not work properly. Using default\n{0}".format(text))
-        start()
+    start(macOS=isMacOS)

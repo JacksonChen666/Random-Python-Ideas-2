@@ -1,4 +1,4 @@
-# video cut: https://stackoverflow.com/questions/37317140/cutting-out-a-portion-of-video-python
+# videosEnt cut: https://stackoverflow.com/questions/37317140/cutting-out-a-portion-of-video-python
 # download from youtube_dl: https://github.com/ytdl-org/youtube-dl/blob/master/README.md#embedding-youtube-dl
 # /users/jackson/desktop/everything/pending/random cut and concat attempts/videos/
 directory = '/path/to/macos/ or C:\\path\\to\\windows\\'  # double backslash because in programming it means something
@@ -15,8 +15,8 @@ def inputting():
     global directory, xdim, ydim, minLength, maxLength, repeats
     directory = input("Directory of the videos:\n")
     repeats = int(input("Repeat thru list how many times:\n"))
-    xdim = int(input("Width of final video:\n"))
-    ydim = int(input("Height of video:\n"))
+    xdim = int(input("Width of final videosEnt:\n"))
+    ydim = int(input("Height of videosEnt:\n"))
     minLength = float(input("Min length of clips:\n"))
     maxLength = float(input("Max length of clips:\n"))
     main()

@@ -1,5 +1,5 @@
 """
-This program takes a folder of videos, pick a random spot, and then just combine it into a video and done
+This program takes a folder of videos, pick a random spot, and then just combine it into a videosEnt and done
 """
 import logging
 import tkinter as tk
@@ -32,6 +32,7 @@ class tkWin:
         self.varStatus = tk.StringVar(self.window, value="Waiting for folder to be selected...")
         self.varPreset = tk.StringVar(self.window, value="medium")
         self.varDiscard = tk.IntVar(self.window, value=20)
+        self.varVideos = tk.IntVar(self.window, value=1)
 
         # Stuff
         self.presetLbl = tk.Label(self.window, text="FFmpeg compression preset:")
@@ -40,23 +41,26 @@ class tkWin:
         self.qualityLbl = tk.Label(self.window, text="Video quality preset:")
         self.quality = tk.OptionMenu(self.window, self.varQuality, *vidQ)
 
-        self.xdimLbl = tk.Label(self.window, text="Video Width:")
-        self.xdim = tk.Entry(self.window, textvariable=self.varXdim)
+        self.xDimLbl = tk.Label(self.window, text="Video Width:")
+        self.xDimEnt = tk.Entry(self.window, textvariable=self.varXdim)
 
-        self.ydimLbl = tk.Label(self.window, text="Video Height:")
-        self.ydim = tk.Entry(self.window, textvariable=self.varYdim)
+        self.yDimLbl = tk.Label(self.window, text="Video Height:")
+        self.yDimEnt = tk.Entry(self.window, textvariable=self.varYdim)
 
         self.minLenLbl = tk.Label(self.window, text="Min Clip Length:")
-        self.minLen = tk.Entry(self.window, textvariable=self.varMinLen)
+        self.minLenEnt = tk.Entry(self.window, textvariable=self.varMinLen)
 
         self.maxLenLbl = tk.Label(self.window, text="Max Clip Length:")
-        self.maxLen = tk.Entry(self.window, textvariable=self.varMaxLen)
+        self.maxLenEnt = tk.Entry(self.window, textvariable=self.varMaxLen)
 
         self.discardLbl = tk.Label(self.window, text="% of random clips discarded")
         self.discardEnt = tk.Entry(self.window, textvariable=self.varDiscard)
 
         self.repeatsLbl = tk.Label(self.window, text="Repeat thru list times:")
-        self.repeats = tk.Entry(self.window, textvariable=self.varRepeats)
+        self.repeatsEnt = tk.Entry(self.window, textvariable=self.varRepeats)
+
+        self.videosLbl = tk.Label(self.window, text="Amount of different videos:")
+        self.videosEnt = tk.Entry(self.window, textvariable=self.varVideos)
 
         self.status = tk.Label(self.window, textvariable=self.varStatus)
 
@@ -74,31 +78,34 @@ class tkWin:
         self.qualityLbl.grid(row=1, column=0, pady=3, sticky="e")
         self.quality.grid(row=1, column=1, pady=3, sticky="nesw")
 
-        self.xdimLbl.grid(row=2, column=0, pady=3, sticky="e")
-        self.xdim.grid(row=2, column=1, pady=3, sticky="nesw")
+        self.xDimLbl.grid(row=2, column=0, pady=3, sticky="e")
+        self.xDimEnt.grid(row=2, column=1, pady=3, sticky="nesw")
 
-        self.ydimLbl.grid(row=3, column=0, pady=3, sticky="e")
-        self.ydim.grid(row=3, column=1, pady=3, sticky="nesw")
+        self.yDimLbl.grid(row=3, column=0, pady=3, sticky="e")
+        self.yDimEnt.grid(row=3, column=1, pady=3, sticky="nesw")
 
         self.minLenLbl.grid(row=4, column=0, pady=3, sticky="e")
-        self.minLen.grid(row=4, column=1, pady=3, sticky="nesw")
+        self.minLenEnt.grid(row=4, column=1, pady=3, sticky="nesw")
 
         self.maxLenLbl.grid(row=5, column=0, pady=3, sticky="e")
-        self.maxLen.grid(row=5, column=1, pady=3, sticky="nesw")
+        self.maxLenEnt.grid(row=5, column=1, pady=3, sticky="nesw")
 
         self.discardLbl.grid(row=6, column=0, pady=3, sticky="e")
         self.discardEnt.grid(row=6, column=1, pady=3, sticky="nesw")
 
         self.repeatsLbl.grid(row=7, column=0, pady=3, sticky="e")
-        self.repeats.grid(row=7, column=1, pady=3, sticky="nesw")
+        self.repeatsEnt.grid(row=7, column=1, pady=3, sticky="nesw")
 
-        self.status.grid(row=8, column=0, columnspan=2, pady=3)
+        self.videosLbl.grid(row=8, column=0, pady=3, sticky="e")
+        self.videosEnt.grid(row=8, column=1, pady=3, sticky="nesw")
 
-        self.chsFldBtn.grid(row=9, column=0, pady=3, padx=3, columnspan=2, sticky="nesw")
+        self.status.grid(row=9, column=0, columnspan=2, pady=3)
 
-        self.installBtn.grid(row=10, column=0, pady=3, padx=3, columnspan=2, sticky="nesw")
+        self.chsFldBtn.grid(row=10, column=0, pady=3, padx=3, columnspan=2, sticky="nesw")
 
-        self.stopBtn.grid(row=11, column=0, pady=3, padx=3, columnspan=2, sticky="nesw")
+        self.installBtn.grid(row=11, column=0, pady=3, padx=3, columnspan=2, sticky="nesw")
+
+        self.stopBtn.grid(row=12, column=0, pady=3, padx=3, columnspan=2, sticky="nesw")
 
         # don't quit yet
         self.window.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -122,7 +129,7 @@ class tkWin:
     def selectFolder(self):
         """
         Asks user what folder to concat videos from, then starts making it.
-        :return: A video.
+        :return: A videosEnt.
         """
         global t
         import threading
@@ -135,6 +142,7 @@ class tkWin:
             float(self.varMaxLen.get())
             int(self.varRepeats.get())
             int(self.varDiscard.get())
+            int(self.varVideos.get())
         except ValueError:
             self.statusUpdate("Error:\nCan't convert some inputs. Check your inputs")
             logging.warning("Can't convert some inputs. Check your inputs")
@@ -151,8 +159,9 @@ class tkWin:
         self.statusUpdate("Processing... If this does not change, there might be an error.")
 
         t = threading.Thread(target=self.processing, args=(
-            self.folder_selected, self.xdim.get(), self.ydim.get(), self.minLen.get(), self.maxLen.get(),
-            self.repeats.get(), self.varDiscard.get(), self.varPreset.get()), daemon=True).start()
+            self.folder_selected, self.xDimEnt.get(), self.yDimEnt.get(), self.minLenEnt.get(), self.maxLenEnt.get(),
+            self.repeatsEnt.get(), self.varDiscard.get(), self.varPreset.get(), self.varVideos.get()),
+                             daemon=True).start()
         return True
 
     def installLibraries(self):
@@ -160,31 +169,33 @@ class tkWin:
         Install the library assuming you don't have it.
         :return: A Library.
         """
-        from subprocess import run
+        from subprocess import run, CalledProcessError
         try:
-            run("pip install moviepy", shell=True, check=True)
-            run("pip install moviepy --upgrade", shell=True, check=True)
-        except:
-            run("pip3 install moviepy", shell=True, check=True)
-            run("pip3 install moviepy --upgrade", shell=True, check=True)
+            run("pip install moviepy", check=True)
+            run("pip install moviepy --upgrade", check=True)
+        except CalledProcessError:
+            run("pip3 install moviepy", check=True)
+            run("pip3 install moviepy --upgrade", check=True)
         self.installBtn.destroy()
 
-    def changeButtons(self, ED):
+    def changeButtons(self, isDisabled):
         """
         Change State of common entries and buttons.
-        :param ED: normal Or disable.
+        :param isDisabled: normal Or disable.
         :return:
         """
-        self.quality.config(state=ED)
-        self.xdim.config(state=ED)
-        self.ydim.config(state=ED)
-        self.minLen.config(state=ED)
-        self.maxLen.config(state=ED)
-        self.repeats.config(state=ED)
-        self.chsFldBtn.config(state=ED)
-        self.quality.config(state=ED)
-        self.preset.config(state=ED)
-        self.discardEnt.config(state=ED)
+        isDisabled = "disabled" if isDisabled else "normal"
+        self.quality.config(state=isDisabled)
+        self.xDimEnt.config(state=isDisabled)
+        self.yDimEnt.config(state=isDisabled)
+        self.minLenEnt.config(state=isDisabled)
+        self.maxLenEnt.config(state=isDisabled)
+        self.repeatsEnt.config(state=isDisabled)
+        self.chsFldBtn.config(state=isDisabled)
+        self.quality.config(state=isDisabled)
+        self.preset.config(state=isDisabled)
+        self.discardEnt.config(state=isDisabled)
+        self.videosEnt.config(state=isDisabled)
         return
 
     def on_closing(self):
@@ -222,51 +233,55 @@ class tkWin:
                 self.varYdim.set(vidQRes[i][1])
         return
 
-    def processing(self, directory, xdim, ydim, minLength, maxLength, repeats, discardedClipsPercent, ffmpeg_preset):
+    def processing(self, directory, xdim, ydim, minLength, maxLength, repeats, discardedClipsPercent, ffmpeg_preset,
+                   amountOfVideos):
         """
         Where the real magic happens.
         :param directory: Directory of videos.
-        :param xdim: Width of output video.
-        :param ydim: Height of output video.
+        :param xdim: Width of output videosEnt.
+        :param ydim: Height of output videosEnt.
         :param minLength: Shortest clip possible.
         :param maxLength: Longest clip possible.
         :param repeats: How many more times to reuse all the clips.
-        :param discardedClipsPercent: percentage of how much clips to be discarded every loop
+        :param discardedClipsPercent: percentage of how much clips to be discarded every loop.
         :param ffmpeg_preset: FFmpeg compression preset (Refer to FFmpeg).
+        :param amountOfVideos: Amount of different videos to make.
         :return: A Video.
         """
         self.installBtn.destroy()  # i've warned you, that you have installed it!!
-        from platform import system
         import os, random
-        if system() == "Linux" or system() == "Darwin":
-            directory += "/"
-        elif system() == "Windows":
-            directory += "\\"
 
         # compile list of videos
         videoFormats = ('.mp4', '.mkv', '.webm', '.mov', '.flv', '.avi', '.m4a', '.m4v', '.f4v', '.f4a')
         clips = [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith(videoFormats) and
-                 os.path.isfile(os.path.join(directory, f)) and f != "FINAL.MP4"]
+                 os.path.isfile(os.path.join(directory, f)) and "FINAL-" not in f]
         logging.debug("Clips: {}".format(clips))
-        inputs = [q for i in range(int(repeats)) for q in clips if random.randint(0, 100) >= float(
-            discardedClipsPercent)]  # randomly selects from original full list
-        random.shuffle(inputs)
+        inputs = []
+        for i in range(amountOfVideos):
+            tempInputs = [q for i in range(int(repeats)) for q in clips if random.randint(0, 100) >= float(
+                discardedClipsPercent)]  # randomly selects from original full list
+            random.shuffle(tempInputs)
+            inputs.append(tempInputs.copy())
         logging.debug("Randomly selected clips: {}".format(inputs))
-        if 500 < len(inputs) < 10000:
+        aClips = 0
+        for i in inputs: aClips += len(i)
+        if 500 < aClips < 10000:
             logging.warning("Exceeded normal limit of 500, might be dangerous if it takes over system ram")
             if messagebox.askokcancel("a lotta clips",
-                                      "There is a total of {0} clips used for concat. Are you sure to continue?".format(len(clips * int(repeats)))):
+                                      "There is a total of {} clips used for concat. "
+                                      "Are you sure to continue?".format(aClips)):
                 pass
             else:
                 self.statusUpdate("Waiting for folder to be selected...")
                 return
-        elif len(inputs) > 10000:
+        elif aClips > 10000:
             logging.warning("Exceeded max limit of 10000, that's too dangerous")
             self.statusUpdate("Waiting for folder to be selected...")
-            messagebox.showwarning("WAY too many clips", "{0} is too many clips. The hard limit is 10000 "
-                                                         "clips. Try lowering repeats and increasing discards".format(len(clips) * int(repeats)))
+            messagebox.showwarning("WAY too many clips", "{} is too many clips. The hard limit is 10000 clips. "
+                                                         "Try lowering repeatsEnt and increasing discards".format(
+                aClips))
             return
-        self.changeButtons("disabled")
+        self.changeButtons(True)
         self.statusUpdate("Importing...", True)
         logging.debug("Importing modules required to continue...")
         from multiprocessing import cpu_count
@@ -274,34 +289,33 @@ class tkWin:
         import traceback as tc
         logging.debug("Finished importing")
 
-        outputs = []
+        output, outputs = [], []
         self.statusUpdate("Thread count of export process: {0}".format(str(cpu_count() * 2)), True)
         self.statusUpdate("Cutting...")
-        for i in inputs:
-            logging.info("\rCutting {}".format(i))
+        for v in inputs:
+            for c in v:
+                logging.info("\rCutting {}".format(c))
+                clip = VideoFileClip(c)
+                clip.resize((int(xdim), int(ydim)))
 
-            # import to moviepy
-            clip = VideoFileClip(i).resize((int(xdim), int(ydim)))
+                length = round(random.uniform(float(minLength), float(maxLength)), 2)
+                start = round(random.uniform(0, clip.duration - length), 2)
 
-            # timing
-            length = round(random.uniform(float(minLength), float(maxLength)), 2)
-            start = round(random.uniform(0, clip.duration - length), 2)
-
-            # cut a subclip and store it later
-            try:
-                outputs.append(clip.subclip(start, start + length))
-            except OSError:
-                self.statusUpdate("oops! error:\n{}\ncontinuing".format(tc.format_exc()))
-                logging.exception("Exception: {}".format(tc.print_exc()))
-                pass
-        self.statusUpdate("Writing... Thread count: {0}.".format(str(cpu_count() * 2)))
-        # combine clips from different videos
-        concatenate_videoclips(outputs).write_videofile(directory + 'FINAL.MP4', threads=cpu_count() * 2,
-                                                        preset=ffmpeg_preset)
+                try:
+                    output.append(clip.subclip(start, start + length))
+                except OSError:
+                    self.statusUpdate("oops! error:\n{}\ncontinuing".format(tc.format_exc()))
+                    logging.exception("Exception: {}".format(tc.print_exc()))
+            outputs.append(output.copy())
+            output.clear()
+        self.statusUpdate("Writing {} videos... Thread count: {}.".format(str(amountOfVideos), str(cpu_count() * 2)))
+        for i in range(len(outputs)):
+            concatenate_videoclips(outputs[i]).write_videofile(os.path.join(directory, 'FINAL-{}.MP4'.format(i + 1)),
+                                                               threads=cpu_count() * 2, preset=ffmpeg_preset)
         self.statusUpdate("Done", True)
-        self.changeButtons("normal")
+        self.changeButtons(False)
         self.folder_selected = ""
-        return outputs
+        return output
 
 
 if __name__ == '__main__':
