@@ -406,7 +406,7 @@ class GUIAndMath:
         # append everything that's below and above the in between, and do the normal median on both lower and higher
         if numList is None: numList = self.numListSaved
         numList.sort()
-        if (len(numList) % 2) == 0:
+        if len(numList) % 2 == 0:
             lowerListChoice = self.rounding(len(numList) / 2 - 1, "down")
             higherListChoice = self.rounding(len(numList) / 2, "up")
         else:

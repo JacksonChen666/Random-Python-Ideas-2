@@ -1,61 +1,68 @@
 #!/usr/bin/python3
-import multiprocessing as mp
+import fcntl
+import logging.handlers
+import multiprocessing
 import os
 import sys
-import threading as t
+import termios
+import threading
 from time import sleep
 
-P = []
-amountOfProcesses = 1
-amountOfRam = 1
-dead = False
-
+amountOfProcesses = sys.argv[1] or 2
+amountOfRam = sys.argv[2] or 16
+memOverflow = logging.getLogger("Memory Overflow")
 
 def start(amount=amountOfProcesses):
     global P
     for e in range(int(amount)):
-        P.append(mp.Process(target=memoryOverflow, daemon=True))
+        P.append(multiprocessing.Process(target=memoryOverflow, daemon=True))
         P[e].start()
+        processes.debug(f"Started {P[e]}")
 
 
 def processesCheck():
     global dead, amountOfProcesses
     amountOfProcesses = int(amountOfProcesses)
-    while True:
+    deadProcesses = 0
+    while deadProcesses < amountOfProcesses:
         deadProcesses = 0
         for q in P: deadProcesses = deadProcesses + 1 if not q.is_alive() else deadProcesses
-        if deadProcesses >= amountOfProcesses:
-            if not dead: sys.stderr.writelines("All of the processes are dead. Quitting")
-            exit(1)
+    if not dead: processes.info("All of the processes are dead. Quitting")
+    os.kill(os.getpid(), 15)
 
 
-def memoryOverflow():
-    d = "\x00" * (2 ** 30 * amountOfRam)
-    # d = "\xf4\x8f\xbf\xbf" * (2 ** 30 * amountOfRam) / 4
+def memoryOverflow(ramLevel=amountOfRam):
+    global finished
+    d = "\x00" * (2 ** 30 * int(ramLevel))
+    memOverflow.info(f"Finished with {ramLevel}GB ram taken")
     while True: sleep(1000000)
 
 
 if __name__ == '__main__':
-    if os.name == 'nt':
-        import msvcrt
-        def getch(): return msvcrt.g().decode()
-    else:
-        import sys, tty, termios
+    processes = logging.getLogger("Processes")
+    logging.basicConfig(level=logging.DEBUG)
+    dead = False
+    P = []
+    def getch():
         fd = sys.stdin.fileno()
-        old_settings = termios.tcgetattr(fd)
-        def getch():
-            try:
-                tty.setraw(sys.stdin.fileno())
-                ch = sys.stdin.read(1)
-            finally: termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-            return ch
-    amountOfRam, amountOfProcesses = sys.argv[1:]
-    print(amountOfRam, amountOfProcesses, sys.argv)
+        oldterm, newattr, oldflags = termios.tcgetattr(fd), termios.tcgetattr(fd), fcntl.fcntl(fd, fcntl.F_GETFL)
+        newattr[3] = newattr[3] & ~termios.ICANON & ~termios.ECHO
+        termios.tcsetattr(fd, termios.TCSANOW, newattr)
+        fcntl.fcntl(fd, fcntl.F_SETFL, oldflags)
+        try:
+            c = sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(fd, termios.TCSAFLUSH, oldterm)
+            fcntl.fcntl(fd, fcntl.F_SETFL, oldflags)
+        return c
+    logging.debug(f"{amountOfRam} {amountOfProcesses} {sys.argv}")
     start()
-    t.Thread(target=processesCheck, daemon=True).start()
-    try: getch()  # life support - ends on user input
-    except ValueError: pass
-    sys.stdout.writelines("Terminating...")
+    threading.Thread(target=processesCheck, daemon=True).start()
+    try:
+        getch()  # life support - ends on user input
+    except ValueError:
+        pass
+    logging.info("Terminating...")
     dead = True
     for i in P: i.terminate()
     exit()

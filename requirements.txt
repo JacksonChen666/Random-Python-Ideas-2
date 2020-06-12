@@ -2,6 +2,8 @@ future
 pynput
 DateTime
 requests
-pygame
+pygame==2.0.0.dev10
 PyAutoGUI
 pydub
+moviepy
+torch

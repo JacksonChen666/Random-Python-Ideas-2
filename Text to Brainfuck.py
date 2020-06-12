@@ -5,7 +5,7 @@ from tkinter import Button, Label, Text, Tk, filedialog, simpledialog
 Tk().withdraw()
 
 
-def displaytext(text):
+def displayText(text):
     root = Tk()
 
     def updateClipboard(textIn):
@@ -46,8 +46,7 @@ def minifiedASCII():
     """
     code = ">"
     for i in minimizedASCIILetters: code += "+" * i + ">"
-    code = code[:-1]  # trailing move
-    code += "[<]>"
+    code = code[:-1] + "[<]" + code[-1]  # fix pointer
     pointer = 0  # "simulate" pointer
     for i in ASCIILetters:
         indexes = minimizedASCIILetters.index(i)
@@ -98,7 +97,7 @@ if __name__ == '__main__':
     if not inputs: exit(1)
     ASCIILetters, minimizedASCIILetters = list(bytes(inputs, encoding='utf8')), sorted(
         list(dict.fromkeys(bytes(inputs, encoding="utf8"))))
-    modes = [minifiedASCII, plusMoveOnly, plusMinusOnly]
+    modes = [moreMinifiedASCII, plusMoveOnly, plusMinusOnly]
     output = [fun() for fun in modes]
     smallest = 100 ** 100
     output2 = output.copy()
@@ -108,4 +107,4 @@ if __name__ == '__main__':
             output = p
     print(f"ASCII: {ASCIILetters}\n"
           f"ASCII minified: {minimizedASCIILetters}")
-    displaytext(output)
+    displayText(output)

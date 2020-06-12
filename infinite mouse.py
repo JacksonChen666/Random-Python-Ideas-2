@@ -95,8 +95,8 @@ def start(macOS=False):
 
 
 if __name__ == '__main__':
-    s, allowed, text, sys, isMacOS = 1, True, "Initialized\nUse right control/right command to pause/resume\nQuit " \
-                                              "combination:", system(), False
+    allowed, text, sys, isMacOS = True, "Initialized\nUse right control/right command to pause/resume\nQuit " \
+                                        "combination:", system(), False
     if sys == "Darwin":
         print("Mac, Stable\n{0}\nCtrl+Esc then Alt+Esc".format(text))
         isMacOS = True

@@ -66,9 +66,6 @@ class tkWin:
 
         self.chsFldBtn = tk.Button(self.window, text="Choose folder", padx=10, command=self.selectFolder)
 
-        self.installBtn = tk.Button(self.window, text="Install required libraries", padx=10,
-                                    command=self.installLibraries)
-
         self.stopBtn = tk.Button(self.window, text="Stop and Close", padx=10, command=self.on_closing)
 
         # Grid
@@ -103,9 +100,7 @@ class tkWin:
 
         self.chsFldBtn.grid(row=10, column=0, pady=3, padx=3, columnspan=2, sticky="nesw")
 
-        self.installBtn.grid(row=11, column=0, pady=3, padx=3, columnspan=2, sticky="nesw")
-
-        self.stopBtn.grid(row=12, column=0, pady=3, padx=3, columnspan=2, sticky="nesw")
+        self.stopBtn.grid(row=11, column=0, pady=3, padx=3, columnspan=2, sticky="nesw")
 
         # don't quit yet
         self.window.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -164,20 +159,6 @@ class tkWin:
                              daemon=True).start()
         return True
 
-    def installLibraries(self):
-        """
-        Install the library assuming you don't have it.
-        :return: A Library.
-        """
-        from subprocess import run, CalledProcessError
-        try:
-            run("pip install moviepy", check=True)
-            run("pip install moviepy --upgrade", check=True)
-        except CalledProcessError:
-            run("pip3 install moviepy", check=True)
-            run("pip3 install moviepy --upgrade", check=True)
-        self.installBtn.destroy()
-
     def changeButtons(self, isDisabled):
         """
         Change State of common entries and buttons.
@@ -223,23 +204,20 @@ class tkWin:
         :param c: CARE
         :return: numbers
         """
-        global vidQ
-        var = self.varQuality.get()
         vidQRes = [(3840, 2160), (2560, 1440), (1920, 1080), (1280, 720), (854, 480), (640, 360), (426, 240),
                    (256, 144)]
-        for i in range(len(vidQ)):
-            if var == vidQ[i]:
-                self.varXdim.set(vidQRes[i][0])
-                self.varYdim.set(vidQRes[i][1])
+        i = vidQ.index(self.varQuality.get())
+        self.varXdim.set(vidQRes[i][0])
+        self.varYdim.set(vidQRes[i][1])
         return
 
-    def processing(self, directory, xdim, ydim, minLength, maxLength, repeats, discardedClipsPercent, ffmpeg_preset,
+    def processing(self, directory, xDim, yDim, minLength, maxLength, repeats, discardedClipsPercent, ffmpeg_preset,
                    amountOfVideos):
         """
         Where the real magic happens.
         :param directory: Directory of videos.
-        :param xdim: Width of output videosEnt.
-        :param ydim: Height of output videosEnt.
+        :param xDim: Width of output videosEnt.
+        :param yDim: Height of output videosEnt.
         :param minLength: Shortest clip possible.
         :param maxLength: Longest clip possible.
         :param repeats: How many more times to reuse all the clips.
@@ -248,7 +226,6 @@ class tkWin:
         :param amountOfVideos: Amount of different videos to make.
         :return: A Video.
         """
-        self.installBtn.destroy()  # i've warned you, that you have installed it!!
         import os, random
 
         # compile list of videos
@@ -282,7 +259,7 @@ class tkWin:
                 aClips))
             return
         self.changeButtons(True)
-        self.statusUpdate("Importing...", True)
+        self.statusUpdate("Importing...")
         logging.debug("Importing modules required to continue...")
         from multiprocessing import cpu_count
         from moviepy.editor import VideoFileClip, concatenate_videoclips
@@ -295,23 +272,25 @@ class tkWin:
         for v in inputs:
             for c in v:
                 logging.info("\rCutting {}".format(c))
-                clip = VideoFileClip(c)
-                clip.resize((int(xdim), int(ydim)))
-
+                clip = VideoFileClip(c).resize((int(xDim), int(yDim)))
                 length = round(random.uniform(float(minLength), float(maxLength)), 2)
                 start = round(random.uniform(0, clip.duration - length), 2)
-
                 try:
                     output.append(clip.subclip(start, start + length))
                 except OSError:
                     self.statusUpdate("oops! error:\n{}\ncontinuing".format(tc.format_exc()))
-                    logging.exception("Exception: {}".format(tc.print_exc()))
+                    logging.exception("Exception-ed")
             outputs.append(output.copy())
             output.clear()
-        self.statusUpdate("Writing {} videos... Thread count: {}.".format(str(amountOfVideos), str(cpu_count() * 2)))
+        self.statusUpdate("Writing {} video(s)... Thread count: {}.".format(str(amountOfVideos), str(cpu_count() * 2)))
         for i in range(len(outputs)):
-            concatenate_videoclips(outputs[i]).write_videofile(os.path.join(directory, 'FINAL-{}.MP4'.format(i + 1)),
-                                                               threads=cpu_count() * 2, preset=ffmpeg_preset)
+            try:
+                concatenate_videoclips(outputs[i]).write_videofile(
+                    os.path.join(directory, 'FINAL-{}.MP4'.format(i + 1)), threads=cpu_count() * 2,
+                    preset=ffmpeg_preset)
+            except (AttributeError,):
+                self.statusUpdate("oops! error:\n{}\nskipping".format(tc.format_exc()))
+                logging.exception("Exception-ed")
         self.statusUpdate("Done", True)
         self.changeButtons(False)
         self.folder_selected = ""

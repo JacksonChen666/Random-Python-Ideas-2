@@ -10,20 +10,47 @@ log.setLevel(logging.DEBUG)
 log.addHandler(logging.StreamHandler())
 
 
-def amplify(fileName: str, formatIn=None, fileNameOut=None, ampLevel=10000, ampToOriginal=False):
-    # filename must contain file format to be precise of the files
-    if not formatIn: formatIn = fileName.rpartition(".")[2]
-    audio = AudioSegment.from_file(fileName, formatIn)
-    if not fileNameOut: fileNameOut = f"{fileName.rpartition('.')[0]}-2.{formatIn}"
-    while True:
-        try:
-            lAudio = audio.apply_gain(ampLevel)
-            break
-        except OverflowError:
-            ampLevel = ampLevel - 1 if ampLevel > 0 else -1
-            if ampLevel <= -1: raise ValueError(f"Audio level has reached -1 or below, making it impossible to amplify. {ampLevel}")
-    final = lAudio if not ampToOriginal else lAudio.apply_gain(audio.dBFS - lAudio.dBFS)
-    final.export(fileNameOut, format=formatIn)
+def amplify(fileName: str, fileNameOut=None, ampLevel=10000, ampToOriginal=False, start=None, end=None):
+    if not fileNameOut: fileNameOut = f"{fileName.rpartition('.')[0]}-2.{fileName.rpartition('.')[2]}"
+    audio = AudioSegment.from_file(fileName)
+
+    def cutAudio(starting=None, ending=None, inAudio=audio):
+        # cutting audio: https://gist.github.com/gchavez2/53148cdf7490ad62699385791816b1ea
+
+        starting = timeToMS(starting)
+        ending = timeToMS(ending)
+        return inAudio[starting:ending], starting, ending
+
+    def ampUp(inAudio, ampLevels):
+        while True:
+            try:
+                return inAudio.apply_gain(ampLevels), ampLevels
+            except OverflowError:
+                ampLevels = ampLevels - 1 if ampLevels > 0 else -1
+                if ampLevels <= -1: raise ValueError(
+                    f"Audio level has reached -1 or below, making it impossible to amplify. Level: {ampLevel}")
+
+    def timeToMS(timeIn):
+        """how it works:
+        take the hours, turn it into minutes and add the minutes
+        take the minutes, turn it into seconds and add the seconds
+        take the seconds, turn it into milliseconds"""
+        # format: (Hours, Minutes, Seconds, Milliseconds) (its a tuple)
+        if timeIn is not None and len(timeIn) == 4: return int(((timeIn[0] * 60 + timeIn[1]) * 60 + timeIn[2]) * 1000 + timeIn[3])
+        return
+
+    def partlyAmpUp(inAudio, ampLevels, starting=None, ending=None):
+        cut, starting, ending = cutAudio(starting, ending, inAudio)
+        if ending is None: return inAudio[:starting] + ampUp(cut, ampLevels)[0]  # without ending
+        return inAudio[:starting] + ampUp(cut, ampLevels)[0] + inAudio[ending:]  # with ending
+
+    def ampDown(inAudio, oAudio):
+        return inAudio if not ampToOriginal else inAudio.apply_gain(oAudio.dBFS - inAudio.dBFS)
+
+    if start is not None: audio = cutAudio(start, end)[0]
+    lAudio, ampLevel = ampUp(audio, ampLevel)
+    final = ampDown(lAudio, audio)
+    final.export(fileNameOut)
     return {
         "original audio": audio,
         "new audio": final,
