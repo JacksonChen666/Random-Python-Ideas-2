@@ -31,7 +31,7 @@ def download(fullURL, fileName=None, dirName="htmlDL"):
             if re.search(r'(<title>|</title>)', fileName): fileName = re.sub(r'(<title>|</title>)+.*', '', fileName)
             if len(fileName) >= 255: raise Exception("File name is too long")
         except (AttributeError, Exception):
-            logging.exception("Unable to find title or fileName too long")
+            logging.exception("Unable to find title or file too long")
             fileName = parsed.path.split("/")[-1] if parsed.path != "" else "index"
             fileName = fileName[:-1] if fileName.endswith("/") else fileName
         folders = [dirName, parsed.netloc]

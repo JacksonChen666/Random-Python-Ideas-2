@@ -23,7 +23,7 @@ COMBINATIONS, awayFrom, current, tNow, tCounter, up, down, left, right, screen_w
     keyboard.Key.shift,
     keyboard.Key.esc}], 3, set(), datetime.datetime.now(), 0, "↑", "↓", "←", "→", tk.Tk().winfo_screenwidth(), \
                                                                                                       tk.Tk().winfo_screenheight()
-
+    
 
 def to_left():
     mouse.Controller().move(-screen_width - awayFrom, 0)
