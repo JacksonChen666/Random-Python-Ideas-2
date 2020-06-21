@@ -13,7 +13,7 @@ nList = returnShuffle(oList.copy())
 iteration = 0
 bestIter = 100 ** 100
 timeTotal = 0
-printPerIteration = 1000
+printPerIteration = int(argv[2]) if len(argv) > 2 else 1000
 
 print("List size: %s" % len(oList))
 sleep(0.1)
@@ -24,7 +24,7 @@ while bestIter > 0:
         t1 = time()
         timeTotal += (t1 - t0) * 1000
         iteration += 1
-        if iteration % printPerIteration == 0: print(f"Iterations: {iteration} ", end="\r", flush=True)
+        if iteration % printPerIteration == 0: print(f"Iterations: {iteration}", end=" \r", flush=True)
     if iteration < bestIter:
         bestIter = iteration
         print(f"New best iterations: {bestIter} in {round(timeTotal, 2)}ms ", flush=True)
