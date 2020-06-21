@@ -18,6 +18,7 @@ printPerIteration = int(argv[2]) if len(argv) > 2 else 1000
 print("List size: %s" % len(oList))
 sleep(0.1)
 while bestIter > 0:
+    print(f"Iterations: {iteration}", end=" \r", flush=True)
     while oList != nList:
         t0 = time()
         shuffle(nList)
