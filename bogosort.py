@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 from random import shuffle
 from time import sleep, time
+from sys import argv
 
 def returnShuffle(lists):
     shuffle(lists)
     return lists
 
-
-oList = [i for i in range(5)]
+num = int(argv[1]) if len(argv) > 1 else 5
+oList = [i for i in range(num)]
 nList = returnShuffle(oList.copy())
 iteration = 0
 bestIter = 100 ** 100
