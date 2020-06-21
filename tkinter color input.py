@@ -9,7 +9,7 @@ class Colors:
         scr_size = (self.window.winfo_screenwidth(), self.window.winfo_screenheight())
         self.window.geometry(f"{win_size[0]}x{win_size[1]}+{scr_size[0] // 2 - win_size[0] // 2}+{scr_size[1] // 2 - win_size[1] // 2}")
         self.entry = Entry(self.window)
-        self.entry.pack(fill=BOTH, expand=1)
+        self.entry.pack(fill=BOTH, expand=True)
         self.entry.bind("<Key>", self.change_color)
         self.window.mainloop()
 
