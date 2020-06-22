@@ -1,50 +1,10 @@
-from tkinter import *
-import requests as r
 import random
-from sys import stderr
 import argparse
-
-
-class CustomText(Text):
-    """https://stackoverflow.com/a/3781773
-    A text widget with a new method, highlight_pattern()
-
-    example:
-
-    text = CustomText()
-    text.tag_configure("red", foreground="#ff0000")
-    text.highlight_pattern("this should be red", "red")
-
-    The highlight_pattern method is a simplified python
-    version of the tcl code at http://wiki.tcl.tk/3246
-    """
-
-    def __init__(self, *args, **kwargs):
-        Text.__init__(self, *args, **kwargs)
-
-    def highlight_pattern(self, pattern, tag, start="1.0", end="end",
-                          regexp=False):
-        """Apply the given tag to all text that matches the given pattern
-
-        If 'regexp' is set to True, pattern will be treated as a regular
-        expression according to Tcl's regular expression syntax.
-        """
-
-        start = self.index(start)
-        end = self.index(end)
-        self.mark_set("matchStart", start)
-        self.mark_set("matchEnd", start)
-        self.mark_set("searchLimit", end)
-
-        count = IntVar()
-        while True:
-            index = self.search(pattern, "matchEnd", "searchLimit",
-                                count=count, regexp=regexp)
-            if index == "": break
-            if count.get() == 0: break  # degenerate pattern which matches zero-length strings
-            self.mark_set("matchStart", index)
-            self.mark_set("matchEnd", "%s+%sc" % (index, count.get()))
-            self.tag_add(tag, "matchStart", "matchEnd")
+import requests as r
+import threading as t
+from tkinter import *
+from sys import stderr
+from time import time, sleep
 
 
 class Typing:
@@ -61,7 +21,7 @@ class Typing:
             print("Using lorem lipsum dictionary")
         self.window = Tk()
         self.window.title("Typing")
-        self.texts = CustomText(self.window, font=("Arial", 16), height=20, wrap=WORD)
+        self.texts = Text(self.window, font=("Arial", 16), height=20, wrap=WORD)
         self.texts.tag_config("correct", foreground="green")
         self.texts.tag_config("incorrect", background="red")
         self.texts.bind("<ButtonPress>", lambda e: "break")
@@ -69,8 +29,10 @@ class Typing:
 
         self.input_box = Entry(self.window, font=("Arial", 15))
         self.input_box.bind("<Key>", self.verify)
-        self.window.bind("<Return>", self.new_typing)
         self.input_box.pack(fill=X)
+
+        self.info = Label(self.window, text="WPM: 0\tAccuracy: 100%")
+        self.info.pack()
 
         self.new_typing()
         self.window.update_idletasks()
@@ -78,34 +40,64 @@ class Typing:
                                                                                        self.window.winfo_height()))
         self.window.minsize(sizes[1][0], sizes[1][1])
         self.window.geometry("+{}+{}".format(sizes[0][0] // 2 - sizes[1][0] // 2, sizes[0][1] // 2 - sizes[1][1] // 2))
+        self.window.bind("<Return>", self.new_typing)
+        self.start_time, self.uncorrected_errors, self.total_errors = None, 0, 0
+        t.Thread(target=self.intervals, daemon=True).start()
         self.window.mainloop()
 
     def verify(self, e):
+        if e.keycode != 8 and e.keycode < 32: return
+        if self.start_time is None: self.start_time = time()
         trueText = self.texts.get("1.0", END).rstrip("\n")
         userInput = self.input_box.get() + e.char if e.keycode != 8 else self.input_box.get()[:-1]
         print(e, flush=True)
-        self.texts.tag_remove("correct", "1.0", END)
-        self.texts.tag_remove("incorrect", "1.0", END)
+        for tag in self.texts.tag_names(): self.texts.tag_remove(tag, "1.0", END)
         if userInput == trueText:
-            self.input_box.config({"background": "green3"})
             self.input_box.insert("end", e.char)
-            self.input_box.config(state=DISABLED)
             self.texts.tag_add("correct", "1.0", END)
+            self.input_box.config(state=DISABLED)
+            self.input_box.config(background="green3")
         elif trueText.startswith(userInput):
-            self.input_box.config({"background": "white"})
-            self.texts.highlight_pattern(userInput, "correct", end=f"1.{len(userInput)}")
+            self.input_box.config(background="white")
+            self.texts.tag_add("correct", "1.0", f"1.{len(userInput)}")
         else:
-            # TODO: include green highlighting because it's being cleared
-            self.input_box.config({"background": "red"})
-            notMatched = True
+            # TODO: don't highlight red on correct letters while it includes incorrect
+            self.input_box.config(background="red")
+            if e.keycode == 8:
+                self.uncorrected_errors = self.uncorrected_errors - 1 if self.uncorrected_errors > 0 else 0
+            if e.keycode < 32:
+                self.total_errors += 1
+                self.uncorrected_errors += 1
             uInput2, uInput3 = userInput, userInput
-            while notMatched:
-                if trueText.startswith(uInput2):
-                    notMatched = False
-                else:
-                    uInput2 = uInput2[:-1]
+            while True:
+                if trueText.startswith(uInput2): break
+                uInput2 = uInput2[:-1]
             uInput3 = uInput3[len(uInput2):]
+            self.texts.tag_add("correct", "1.0", f"1.{len(uInput2)}")
             self.texts.tag_add("incorrect", f"1.{len(uInput2)}", f"1.{len(uInput2) + len(uInput3)}")
+
+    def intervals(self):
+        while True:
+            try:
+                if self.input_box.cget('state') == NORMAL: self.wpm_and_accuracy()
+            except TypeError:
+                continue
+            sleep(0.1)
+        pass
+
+    def wpm_and_accuracy(self, e=None):
+        # wpm and accuracy: https://www.speedtypingonline.com/typing-equations
+        userInputLen = len(self.input_box.get()) if e is None else len(self.input_box.get() + e.char)
+        time_apart = (time() - self.start_time) / 60
+        try:
+            accuracy = (userInputLen - self.uncorrected_errors) / userInputLen * 100
+        except ZeroDivisionError:
+            accuracy = None
+        try:
+            net_wpm = (userInputLen / 5 - self.uncorrected_errors) / time_apart
+        except ZeroDivisionError:
+            net_wpm = None
+        self.info.config(text=f"WPM: {int(net_wpm) or 0}\tAccuracy: {int(accuracy) or 100}%")
 
     def new_typing(self, e=None, text=None):
         # TODO: take quotes like type racer
@@ -113,7 +105,7 @@ class Typing:
             words = [random.choice(self.words) for i in range(random.randint(args.min, args.max))]
             text = " ".join(words)
         self.set_text(text or "Unknown")
-        self.texts.config({"background": "white"})
+        self.texts.config(background="white")
 
     def set_text(self, text):
         self.texts.config(state=NORMAL)
@@ -124,8 +116,12 @@ class Typing:
         self.input_box.delete(0, END)
         self.input_box.focus_set()
         self.input_box.config(background="white")
+        self.start_time = None
+        self.uncorrected_errors = 0
+        self.total_errors = 0
 
-    def get_lorem(self):
+    @staticmethod
+    def get_lorem():
         # no, i cannot include the english dictionary just like lipsum. lipsum is smaller. (26 kb, 8 kb compressed)
         import zipfile as zf
         import tempfile as tf
