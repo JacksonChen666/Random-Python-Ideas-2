@@ -1,28 +1,28 @@
-import random
-import argparse
-import requests as r
-import threading as t
-from tkinter import *
-from sys import stderr
+from argparse import ArgumentParser as APrs
+from random import choice, randint
+from sys import stderr as err
+from threading import Thread
 from time import time, sleep
+from tkinter import Tk, Text, BOTH, WORD, Label, X, Entry, END, DISABLED, NORMAL
+
+from requests import get, exceptions
 
 
 class Typing:
     def __init__(self):
+        self.words = None
         try:
-            self.words = r.get(
-                "https://raw.githubusercontent.com/dwyl/english-words/master/words.txt").text.splitlines() \
-                if not args.lorem else None
-        except r.exceptions.ConnectionError:
-            stderr.writelines("Error: Unable to get words online. Using lorem lipsum instead.\n")
-            self.words = None
+            self.words = get(
+                "https://raw.githubusercontent.com/dwyl/english-words/master/words.txt").text.splitlines() if not args.lorem else None
+        except exceptions.ConnectionError:
+            err.writelines("Error: Unable to get words online. Using lorem lipsum instead.\n")
         if self.words is None:
             self.words = self.get_lorem()
             print("Using lorem lipsum dictionary")
         self.window = Tk()
         self.window.title("Typing")
         self.texts = Text(self.window, font=("Arial", 16), height=20, wrap=WORD)
-        self.texts.tag_config("correct", foreground="green")
+        self.texts.tag_config("correct", foreground="green3")
         self.texts.tag_config("incorrect", background="red")
         self.texts.bind("<ButtonPress>", lambda e: "break")
         self.texts.pack(fill=BOTH, expand=True)
@@ -36,45 +36,42 @@ class Typing:
 
         self.new_typing()
         self.window.update_idletasks()
-        sizes = ((self.window.winfo_screenwidth(), self.window.winfo_screenheight()), (self.window.winfo_width(),
-                                                                                       self.window.winfo_height()))
+        sizes = ((self.window.winfo_screenwidth(), self.window.winfo_screenheight()),
+                 (self.window.winfo_width(), self.window.winfo_height()))
         self.window.minsize(sizes[1][0], sizes[1][1])
         self.window.geometry("+{}+{}".format(sizes[0][0] // 2 - sizes[1][0] // 2, sizes[0][1] // 2 - sizes[1][1] // 2))
         self.window.bind("<Return>", self.new_typing)
         self.start_time, self.uncorrected_errors, self.total_errors = None, 0, 0
-        t.Thread(target=self.intervals, daemon=True).start()
+        Thread(target=self.intervals, daemon=True).start()
         self.window.mainloop()
 
     def verify(self, e):
-        if e.keycode != 8 and e.keycode < 32: return
+        if e.keycode != 8 and e.keycode < 32: return "break"
         if self.start_time is None: self.start_time = time()
         trueText = self.texts.get("1.0", END).rstrip("\n")
         userInput = self.input_box.get() + e.char if e.keycode != 8 else self.input_box.get()[:-1]
-        print(e, flush=True)
         for tag in self.texts.tag_names(): self.texts.tag_remove(tag, "1.0", END)
         if userInput == trueText:
             self.input_box.insert("end", e.char)
             self.texts.tag_add("correct", "1.0", END)
             self.input_box.config(state=DISABLED)
-            self.input_box.config(background="green3")
         elif trueText.startswith(userInput):
             self.input_box.config(background="white")
             self.texts.tag_add("correct", "1.0", f"1.{len(userInput)}")
         else:
             # TODO: don't highlight red on correct letters while it includes incorrect
             self.input_box.config(background="red")
-            if e.keycode == 8:
-                self.uncorrected_errors = self.uncorrected_errors - 1 if self.uncorrected_errors > 0 else 0
+            if e.keycode == 8: self.uncorrected_errors = self.uncorrected_errors - 1 if self.uncorrected_errors > 0 else 0
             if e.keycode < 32:
                 self.total_errors += 1
                 self.uncorrected_errors += 1
-            uInput2, uInput3 = userInput, userInput
+            ui2 = userInput
             while True:
-                if trueText.startswith(uInput2): break
-                uInput2 = uInput2[:-1]
-            uInput3 = uInput3[len(uInput2):]
-            self.texts.tag_add("correct", "1.0", f"1.{len(uInput2)}")
-            self.texts.tag_add("incorrect", f"1.{len(uInput2)}", f"1.{len(uInput2) + len(uInput3)}")
+                if trueText.startswith(ui2): break
+                ui2 = ui2[:-1]
+            lUI2 = len(ui2)
+            self.texts.tag_add("correct", "1.0", f"1.{lUI2}")
+            self.texts.tag_add("incorrect", f"1.{lUI2}", f"1.{lUI2 + len(userInput[lUI2:])}")
 
     def intervals(self):
         while True:
@@ -83,7 +80,6 @@ class Typing:
             except TypeError:
                 continue
             sleep(0.1)
-        pass
 
     def wpm_and_accuracy(self, e=None):
         # wpm and accuracy: https://www.speedtypingonline.com/typing-equations
@@ -91,34 +87,25 @@ class Typing:
         time_apart = (time() - self.start_time) / 60
         try:
             accuracy = (userInputLen - self.uncorrected_errors) / userInputLen * 100
-        except ZeroDivisionError:
-            accuracy = None
-        try:
             net_wpm = (userInputLen / 5 - self.uncorrected_errors) / time_apart
         except ZeroDivisionError:
-            net_wpm = None
+            accuracy, net_wpm = None, None
         self.info.config(text=f"WPM: {int(net_wpm) or 0}\tAccuracy: {int(accuracy) or 100}%")
 
-    def new_typing(self, e=None, text=None):
-        # TODO: take quotes like type racer
+    def new_typing(self, e=None, text=None):  # TODO: take quotes like type racer
         if text is None:
-            words = [random.choice(self.words) for i in range(random.randint(args.min, args.max))]
+            words = [choice(self.words) for i in range(randint(args.min, args.max))]
             text = " ".join(words)
-        self.set_text(text or "Unknown")
-        self.texts.config(background="white")
-
-    def set_text(self, text):
         self.texts.config(state=NORMAL)
         self.texts.delete("1.0", END)
-        self.texts.insert("end", text)
+        self.texts.insert("end", text or "Unknown")
         self.texts.config(state=DISABLED)
         self.input_box.config(state=NORMAL)
         self.input_box.delete(0, END)
         self.input_box.focus_set()
         self.input_box.config(background="white")
-        self.start_time = None
-        self.uncorrected_errors = 0
-        self.total_errors = 0
+        self.start_time, self.uncorrected_errors, self.total_errors = None, 0, 0
+        self.texts.config(background="white")
 
     @staticmethod
     def get_lorem():
@@ -133,14 +120,13 @@ class Typing:
         temp_zip_loc = temp_zip.name
         temp_zip.close()
         with zf.ZipFile(temp_zip_loc) as z:
-            with z.open("lorem.txt") as f:
-                lorem = f.read().decode("utf-8").splitlines()
+            with z.open("lorem.txt") as f: lorem = f.read().decode("utf-8").splitlines()
         remove(temp_zip_loc)
         return lorem
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Type random words from the dictionary")
+    parser = APrs(description="Type random words from the dictionary")
     parser.add_argument("-l", "--lorem", help="Use the lorem lipsum dictionary instead of the english dictionary",
                         action="store_true")
     parser.add_argument("-min", metavar="3", help="Minimum amount of words", type=int, default=3)
