@@ -5,6 +5,48 @@ from sys import stderr
 import argparse
 
 
+class CustomText(Text):
+    """https://stackoverflow.com/a/3781773
+    A text widget with a new method, highlight_pattern()
+
+    example:
+
+    text = CustomText()
+    text.tag_configure("red", foreground="#ff0000")
+    text.highlight_pattern("this should be red", "red")
+
+    The highlight_pattern method is a simplified python
+    version of the tcl code at http://wiki.tcl.tk/3246
+    """
+
+    def __init__(self, *args, **kwargs):
+        Text.__init__(self, *args, **kwargs)
+
+    def highlight_pattern(self, pattern, tag, start="1.0", end="end",
+                          regexp=False):
+        """Apply the given tag to all text that matches the given pattern
+
+        If 'regexp' is set to True, pattern will be treated as a regular
+        expression according to Tcl's regular expression syntax.
+        """
+
+        start = self.index(start)
+        end = self.index(end)
+        self.mark_set("matchStart", start)
+        self.mark_set("matchEnd", start)
+        self.mark_set("searchLimit", end)
+
+        count = IntVar()
+        while True:
+            index = self.search(pattern, "matchEnd", "searchLimit",
+                                count=count, regexp=regexp)
+            if index == "": break
+            if count.get() == 0: break  # degenerate pattern which matches zero-length strings
+            self.mark_set("matchStart", index)
+            self.mark_set("matchEnd", "%s+%sc" % (index, count.get()))
+            self.tag_add(tag, "matchStart", "matchEnd")
+
+
 class Typing:
     def __init__(self):
         try:
@@ -19,7 +61,9 @@ class Typing:
             print("Using lorem lipsum dictionary")
         self.window = Tk()
         self.window.title("Typing")
-        self.texts = Text(self.window, font=("Arial", 16), height=20, wrap=WORD)
+        self.texts = CustomText(self.window, font=("Arial", 16), height=20, wrap=WORD)
+        self.texts.tag_config("correct", foreground="green")
+        self.texts.tag_config("incorrect", background="red")
         self.texts.bind("<ButtonPress>", lambda e: "break")
         self.texts.pack(fill=BOTH, expand=True)
 
@@ -40,14 +84,28 @@ class Typing:
         trueText = self.texts.get("1.0", END).rstrip("\n")
         userInput = self.input_box.get() + e.char if e.keycode != 8 else self.input_box.get()[:-1]
         print(e, flush=True)
+        self.texts.tag_remove("correct", "1.0", END)
+        self.texts.tag_remove("incorrect", "1.0", END)
         if userInput == trueText:
-            self.texts.config({"background": "green3"})
+            self.input_box.config({"background": "green3"})
             self.input_box.insert("end", e.char)
             self.input_box.config(state=DISABLED)
+            self.texts.tag_add("correct", "1.0", END)
         elif trueText.startswith(userInput):
-            self.texts.config({"background": "white"})
+            self.input_box.config({"background": "white"})
+            self.texts.highlight_pattern(userInput, "correct", end=f"1.{len(userInput)}")
         else:
-            self.texts.config({"background": "red"})
+            # TODO: include green highlighting because it's being cleared
+            self.input_box.config({"background": "red"})
+            notMatched = True
+            uInput2, uInput3 = userInput, userInput
+            while notMatched:
+                if trueText.startswith(uInput2):
+                    notMatched = False
+                else:
+                    uInput2 = uInput2[:-1]
+            uInput3 = uInput3[len(uInput2):]
+            self.texts.tag_add("incorrect", f"1.{len(uInput2)}", f"1.{len(uInput2) + len(uInput3)}")
 
     def new_typing(self, e=None, text=None):
         # TODO: take quotes like type racer
@@ -56,7 +114,6 @@ class Typing:
             text = " ".join(words)
         self.set_text(text or "Unknown")
         self.texts.config({"background": "white"})
-        self.input_box.delete(0, END)
 
     def set_text(self, text):
         self.texts.config(state=NORMAL)
@@ -66,6 +123,7 @@ class Typing:
         self.input_box.config(state=NORMAL)
         self.input_box.delete(0, END)
         self.input_box.focus_set()
+        self.input_box.config(background="white")
 
     def get_lorem(self):
         # no, i cannot include the english dictionary just like lipsum. lipsum is smaller. (26 kb, 8 kb compressed)
