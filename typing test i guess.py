@@ -1,6 +1,6 @@
-from argparse import ArgumentParser as APrs
+from argparse import ArgumentParser
 from random import choice, randint
-from sys import stderr as err
+from sys import stderr
 from threading import Thread
 from time import time, sleep
 from tkinter import Tk, Text, BOTH, WORD, Label, X, Entry, END, DISABLED, NORMAL
@@ -15,7 +15,7 @@ class Typing:
             self.words = get(
                 "https://raw.githubusercontent.com/dwyl/english-words/master/words.txt").text.splitlines() if not args.lorem else None
         except exceptions.ConnectionError:
-            err.writelines("Error: Unable to get words online. Using lorem lipsum instead.\n")
+            stderr.writelines("Error: Unable to get words online. Using lorem lipsum instead.\n")
         if self.words is None:
             self.words = self.get_lorem()
             print("Using lorem lipsum dictionary")
@@ -46,7 +46,7 @@ class Typing:
         self.window.mainloop()
 
     def verify(self, e):
-        if e.keycode != 8 and e.keycode < 32: return "break"
+        if e.keycode != 8 and e.keycode != 13 and e.keycode < 32: return "break"
         if self.start_time is None: self.start_time = time()
         trueText = self.texts.get("1.0", END).rstrip("\n")
         userInput = self.input_box.get() + e.char if e.keycode != 8 else self.input_box.get()[:-1]
@@ -59,19 +59,25 @@ class Typing:
             self.input_box.config(background="white")
             self.texts.tag_add("correct", "1.0", f"1.{len(userInput)}")
         else:
-            # TODO: don't highlight red on correct letters while it includes incorrect
             self.input_box.config(background="red")
             if e.keycode == 8: self.uncorrected_errors = self.uncorrected_errors - 1 if self.uncorrected_errors > 0 else 0
-            if e.keycode < 32:
-                self.total_errors += 1
-                self.uncorrected_errors += 1
+            self.total_errors += 1
             ui2 = userInput
             while True:
                 if trueText.startswith(ui2): break
                 ui2 = ui2[:-1]
             lUI2 = len(ui2)
+            EFT = lUI2 + len(userInput[lUI2:])
             self.texts.tag_add("correct", "1.0", f"1.{lUI2}")
-            self.texts.tag_add("incorrect", f"1.{lUI2}", f"1.{lUI2 + len(userInput[lUI2:])}")
+            self.texts.tag_add("incorrect", f"1.{lUI2}", f"1.{EFT}")
+            userInput, trueText = userInput[lUI2:EFT], trueText[lUI2:EFT]
+            self.uncorrected_errors = EFT - lUI2
+            for i in range(EFT - lUI2):
+                if userInput[i] == trueText[i]:
+                    i += lUI2
+                    self.texts.tag_remove("incorrect", f"1.{i}", f"1.{i + 1}")
+                    self.texts.tag_add("correct", f"1.{i}", f"1.{i + 1}")
+                    self.uncorrected_errors -= 1
 
     def intervals(self):
         while True:
@@ -126,7 +132,7 @@ class Typing:
 
 
 if __name__ == '__main__':
-    parser = APrs(description="Type random words from the dictionary")
+    parser = ArgumentParser(description="Type random words from the dictionary")
     parser.add_argument("-l", "--lorem", help="Use the lorem lipsum dictionary instead of the english dictionary",
                         action="store_true")
     parser.add_argument("-min", metavar="3", help="Minimum amount of words", type=int, default=3)
