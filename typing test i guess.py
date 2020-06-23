@@ -69,15 +69,15 @@ class Typing:
             lUI2 = len(ui2)
             EFT = lUI2 + len(userInput[lUI2:])
             self.texts.tag_add("correct", "1.0", f"1.{lUI2}")
-            self.texts.tag_add("incorrect", f"1.{lUI2}", f"1.{EFT}")
             userInput, trueText = userInput[lUI2:EFT], trueText[lUI2:EFT]
             self.uncorrected_errors = EFT - lUI2
             for i in range(EFT - lUI2):
+                i2 = i + lUI2
                 if userInput[i] == trueText[i]:
-                    i += lUI2
-                    self.texts.tag_remove("incorrect", f"1.{i}", f"1.{i + 1}")
-                    self.texts.tag_add("correct", f"1.{i}", f"1.{i + 1}")
+                    self.texts.tag_add("correct", f"1.{i2}", f"1.{i2 + 1}")
                     self.uncorrected_errors -= 1
+                else:
+                    self.texts.tag_add("incorrect", f"1.{i2}", f"1.{i2 + 1}")
 
     def intervals(self):
         while True:
