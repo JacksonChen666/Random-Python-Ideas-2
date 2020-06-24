@@ -13,15 +13,8 @@ class Error(Exception):
 
 
 class NoWordsSelected(Error):
-    """
-    Raised when no words gets selected in 5 seconds
-    """
-
-    def __init__(self, message="Unable to get words from the minimum length of {} and maximum length of {}.",
-                 min_len=None, max_len=None):
-        if min_len is None: min_len = args.min_len
-        if max_len is None: max_len = args.max_len
-        super().__init__(message.format(min_len, max_len))
+    def __init__(self, message="Unable to get words from the minimum length of {} and maximum length of {}."):
+        super().__init__(message.format(args.min_len, args.max_len))
 
 
 class Typing:
@@ -31,6 +24,7 @@ class Typing:
         self.texts = Text(self.window, font=("Arial", 16), height=20, wrap=WORD)
         self.texts.tag_config("correct", foreground="green3")
         self.texts.tag_config("incorrect", background="red")
+        self.texts.insert("1.0", "Loading...")
         self.texts.bind("<ButtonPress>", lambda e: "break")
         self.texts.pack(fill=BOTH, expand=True)
 
@@ -47,25 +41,23 @@ class Typing:
         self.window.minsize(sizes[1][0], sizes[1][1])
         self.window.geometry("+{}+{}".format(sizes[0][0] // 2 - sizes[1][0] // 2, sizes[0][1] // 2 - sizes[1][1] // 2))
         self.window.update_idletasks()
-        self.new_typing(text="Loading...")
         self.window.update()
 
         self.words = None
         try:
-            self.words = get(
-                "https://raw.githubusercontent.com/dwyl/english-words/master/words.txt").text.splitlines() if not args.lorem else None
+            self.words = get("https://raw.githubusercontent.com/dwyl/english-words/master/words.txt").text.splitlines() \
+                if not args.lorem else None
         except exceptions.ConnectionError:
             stderr.writelines("Error: Unable to get words online. Using lorem lipsum instead.\n")
         if self.words is None:
             self.words = self.get_lorem()
             print("Using lorem lipsum dictionary")
-        temp = [i for i in self.words if args.max_len > len(i) > args.min_len]
-        self.words = temp.copy()
-        del temp
+        if args.min_len > len(min(self.words)) or args.max_len < len(max(self.words)):
+            self.words = [i for i in self.words if args.max_len >= len(i) >= args.min_len]
 
-        self.new_typing()
         self.window.bind("<Return>", self.new_typing)
         self.start_time, self.uncorrected_errors, self.total_errors = None, 0, 0
+        self.new_typing()
         Thread(target=self.intervals, daemon=True).start()
         self.window.mainloop()
 
@@ -74,10 +66,11 @@ class Typing:
             self.input_box.insert("end", e.char)
             self.input_box.config(state=DISABLED)
 
-        if e.keycode != 8 and e.keycode != 13 and e.keycode < 32: return "break"
+        te = e.keycode
+        if not (te == 8 or te == 13) and (te < 32): return "break"
         if self.start_time is None: self.start_time = time()
-        trueText = self.texts.get("1.0", END).rstrip("\n")
-        userInput = self.input_box.get() + e.char if e.keycode != 8 else self.input_box.get()[:-1]
+        trueText, userInput = self.texts.get("1.0", END).rstrip(
+            "\n"), self.input_box.get() + e.char if e.keycode != 8 else self.input_box.get()[:-1]
         for tag in self.texts.tag_names(): self.texts.tag_remove(tag, "1.0", END)
         if userInput == trueText:
             self.texts.tag_add("correct", "1.0", END)
@@ -87,11 +80,10 @@ class Typing:
             self.texts.tag_add("correct", "1.0", f"1.{len(userInput)}")
         else:
             self.input_box.config(background="red")
-            self.total_errors += 1
+            if te == 8: self.total_errors += 1
             ui2 = userInput
             while not trueText.startswith(ui2): ui2 = ui2[:-1]
-            lUI2 = len(ui2)
-            EFT = lUI2 + len(userInput[lUI2:])
+            lUI2, EFT = len(ui2), len(ui2) + len(userInput[len(ui2):])
             userInput, trueText = userInput[lUI2:EFT], trueText[lUI2:EFT]
             self.texts.tag_add("correct", "1.0", f"1.{lUI2}")
             self.uncorrected_errors = EFT - lUI2
@@ -112,10 +104,10 @@ class Typing:
     def intervals(self):
         while True:
             try:
-                if self.input_box.cget('state') == NORMAL: self.wpm_and_accuracy()
+                if self.input_box.cget('state') == NORMAL and self.start_time is not None: self.wpm_and_accuracy()
             except TypeError:
                 continue
-            sleep(0.1)
+            sleep(0.25)
 
     def wpm_and_accuracy(self, e=None):
         # wpm and accuracy: https://www.speedtypingonline.com/typing-equations
@@ -132,20 +124,8 @@ class Typing:
 
     def new_typing(self, e=None, text=None):  # TODO: take quotes like type racer
         if text is None:
-            self.new_typing(text="Generating...")
-            self.input_box.config(state=DISABLED)
-            self.window.update()
-            if args.min_len > args.max_len: args.min_len, args.max_len = args.max_len, args.min_len
-            args.min_len, args.max_len, args.max, args.min = \
-                abs(args.min_len), abs(args.max_len), abs(args.max), abs(args.min)
             words = [choice(self.words) for i in range(randint(args.min, args.max))]
-            words_amount = randint(args.min, args.max)
-            temp_start_time = time()
-            while len(words) != words_amount and temp_start_time - time() < 5:
-                temp_word = choice(self.words)
-                if args.max_len >= len(temp_word) >= args.min_len: words.append(temp_word)
-                if time() - temp_start_time > 5: break  # took too long, just stop
-            if not len(words) > 1: raise NoWordsSelected(
+            if not len(words) > 0: raise NoWordsSelected(
                 f"Unable to get words from the minimum length of {args.min_len} and maximum length of "
                 f"{args.max_len}")
             text = " ".join(words)
@@ -184,7 +164,11 @@ if __name__ == '__main__':
     parser.add_argument("-min", metavar="3", help="Minimum amount of words", type=int, default=3)
     parser.add_argument("-max", metavar="50", help="Maximum amount of words", type=int, default=50)
     parser.add_argument("--max-len", dest="max_len", metavar="100", help="Max length for each word", type=int,
-                        default=100)
-    parser.add_argument("--min-len", dest="min_len", metavar="1", help="Min length for each word", type=int, default=1)
+                        default=100 ** 100)
+    parser.add_argument("--min-len", dest="min_len", metavar="0", help="Min length for each word", type=int, default=0)
     args = parser.parse_args()
+    if args.min_len > args.max_len: args.min_len, args.max_len = args.max_len, args.min_len
+    if args.min > args.max: args.min, args.max = args.max, args.min
+    args.min_len, args.max_len, args.max, args.min = \
+        abs(args.min_len), abs(args.max_len), abs(args.max), abs(args.min)
     tkWin = Typing()
