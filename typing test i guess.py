@@ -8,17 +8,24 @@ from tkinter import Tk, Text, BOTH, WORD, Label, X, Entry, END, DISABLED, NORMAL
 from requests import get, exceptions
 
 
+class Error(Exception):
+    pass
+
+
+class NoWordsSelected(Error):
+    """
+    Raised when no words gets selected in 5 seconds
+    """
+
+    def __init__(self, message="Unable to get words from the minimum length of {} and maximum length of {}.",
+                 min_len=None, max_len=None):
+        if min_len is None: min_len = args.min_len
+        if max_len is None: max_len = args.max_len
+        super().__init__(message.format(min_len, max_len))
+
+
 class Typing:
     def __init__(self):
-        self.words = None
-        try:
-            self.words = get(
-                "https://raw.githubusercontent.com/dwyl/english-words/master/words.txt").text.splitlines() if not args.lorem else None
-        except exceptions.ConnectionError:
-            stderr.writelines("Error: Unable to get words online. Using lorem lipsum instead.\n")
-        if self.words is None:
-            self.words = self.get_lorem()
-            print("Using lorem lipsum dictionary")
         self.window = Tk()
         self.window.title("Typing")
         self.texts = Text(self.window, font=("Arial", 16), height=20, wrap=WORD)
@@ -34,12 +41,29 @@ class Typing:
         self.info = Label(self.window, text="WPM: 0\tAccuracy: 100%")
         self.info.pack()
 
-        self.new_typing()
         self.window.update_idletasks()
         sizes = ((self.window.winfo_screenwidth(), self.window.winfo_screenheight()),
                  (self.window.winfo_width(), self.window.winfo_height()))
         self.window.minsize(sizes[1][0], sizes[1][1])
         self.window.geometry("+{}+{}".format(sizes[0][0] // 2 - sizes[1][0] // 2, sizes[0][1] // 2 - sizes[1][1] // 2))
+        self.window.update_idletasks()
+        self.new_typing(text="Loading...")
+        self.window.update()
+
+        self.words = None
+        try:
+            self.words = get(
+                "https://raw.githubusercontent.com/dwyl/english-words/master/words.txt").text.splitlines() if not args.lorem else None
+        except exceptions.ConnectionError:
+            stderr.writelines("Error: Unable to get words online. Using lorem lipsum instead.\n")
+        if self.words is None:
+            self.words = self.get_lorem()
+            print("Using lorem lipsum dictionary")
+        temp = [i for i in self.words if args.max_len > len(i) > args.min_len]
+        self.words = temp.copy()
+        del temp
+
+        self.new_typing()
         self.window.bind("<Return>", self.new_typing)
         self.start_time, self.uncorrected_errors, self.total_errors = None, 0, 0
         Thread(target=self.intervals, daemon=True).start()
@@ -108,7 +132,22 @@ class Typing:
 
     def new_typing(self, e=None, text=None):  # TODO: take quotes like type racer
         if text is None:
+            self.new_typing(text="Generating...")
+            self.input_box.config(state=DISABLED)
+            self.window.update()
+            if args.min_len > args.max_len: args.min_len, args.max_len = args.max_len, args.min_len
+            args.min_len, args.max_len, args.max, args.min = \
+                abs(args.min_len), abs(args.max_len), abs(args.max), abs(args.min)
             words = [choice(self.words) for i in range(randint(args.min, args.max))]
+            words_amount = randint(args.min, args.max)
+            temp_start_time = time()
+            while len(words) != words_amount and temp_start_time - time() < 5:
+                temp_word = choice(self.words)
+                if args.max_len >= len(temp_word) >= args.min_len: words.append(temp_word)
+                if time() - temp_start_time > 5: break  # took too long, just stop
+            if not len(words) > 1: raise NoWordsSelected(
+                f"Unable to get words from the minimum length of {args.min_len} and maximum length of "
+                f"{args.max_len}")
             text = " ".join(words)
         self.texts.config(state=NORMAL)
         self.texts.delete("1.0", END)
@@ -144,5 +183,8 @@ if __name__ == '__main__':
                         action="store_true")
     parser.add_argument("-min", metavar="3", help="Minimum amount of words", type=int, default=3)
     parser.add_argument("-max", metavar="50", help="Maximum amount of words", type=int, default=50)
+    parser.add_argument("--max-len", dest="max_len", metavar="100", help="Max length for each word", type=int,
+                        default=100)
+    parser.add_argument("--min-len", dest="min_len", metavar="1", help="Min length for each word", type=int, default=1)
     args = parser.parse_args()
     tkWin = Typing()
