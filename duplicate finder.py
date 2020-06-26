@@ -1,20 +1,8 @@
 #!/usr/bin/env python3
-"""
-graph of work:
-    get all the files in choice of directory
-    get all file sizes
-    remove all file sizes that are not the same with list.count(2)
-    for every file that has the same file size, do:
-        calculate 1kb of the file
-        add to dictionary of {"filename": "hash"}
-    remove any non-duplicate hashes (by getting all the values into a list and stuff)
-    get full hash of all duplicates, and check if it matches
-    if it matches, write to file of chosen directory
-"""
 import hashlib
 import logging
 import os
-from re import search, IGNORECASE
+from re import IGNORECASE, search
 from sys import argv, stderr, stdout
 
 logging.basicConfig(level=logging.INFO, stream=stdout)
@@ -26,15 +14,25 @@ allow_delete = True
 
 if os.name == 'nt':
     import msvcrt
-    def g(): return msvcrt.g().decode()
+
+
+    def g():
+        return msvcrt.g().decode()
 else:
     import sys, tty, termios
+
     fd = sys.stdin.fileno()
-    try: old_settings = termios.tcgetattr(fd)
-    except termios.error: allow_delete = False
+    try:
+        old_settings = termios.tcgetattr(fd)
+    except termios.error:
+        allow_delete = False
+
+
     def g():
-        try: tty.setraw(sys.stdin.fileno()); ch = sys.stdin.read(1)
-        finally: termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        try:
+            tty.setraw(sys.stdin.fileno()); ch = sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
         s = ch
         return s
 
@@ -49,8 +47,6 @@ def find_files(cDir):
                 files.debug(f"File found: {path}")
             else:
                 files.debug("Excluded file/folder found in path/file, excluding")
-                continue
-    # files.debug(f"Full files list: {temp}")  # laggy
     return temp
 
 
@@ -61,7 +57,7 @@ def get_file_sizes(filez):
             fileSizeE[file] = os.path.getsize(file)
             sizes.debug(f"File size of {file} is {fileSizeE[file]} bytes")
         except OSError:
-            filez.remove(file)
+            filez.remove(file)  # no this isn't delete file
             sizes.error("No permission, or file not found")
             continue
     return fileSizeE
@@ -72,8 +68,8 @@ def remove_non_duplicates(inp):
     list1 = list(inp.keys())  # {"this": "not this"}
     list2 = list(inp.values())  # {"not this": "this"}
     for item in list2:
-        if list2.count(item) == 1:
-            ind = list2.index(item)
+        ind = list2.index(item)
+        if ind == 1:
             non_dupe.debug(f"{list1[ind]} is not a duplicate")
             del list1[ind], list2[ind]
     return dict(zip(list1, list2))  # to tuples then back to dict
@@ -99,24 +95,15 @@ def duplicate_finalizing(fileHash: dict):
             tDict[i[1]] += (i[0],)
         except KeyError:
             tDict[i[1]] = (i[0],)
-    for i in list(tDict.items()):
-        if len(i[1]) == 1:
-            del tDict[i[0]]
-    print(len(tDict))
+    for i in list(tDict.items()):  # delete all with no duplicates
+        if len(i[1]) == 1: del tDict[i[0]]
     return tDict
 
 
 def print_dupes(dicts: dict):
-    items = 0
-    for key in dicts:
-        if len(dicts[key]) <= 1: continue
-        yield f"{dicts[key][0]} is a duplicate of {dicts[key][-1]}" if len(dicts[key]) == 2 else " ".join(
-            [dicts[key][0], "is a duplicate of", ", ".join(dicts[key][1:-1]), "and", dicts[key][-1]]), dicts[key][0]
-        items += 1
-    if items == 0:
-        print("No duplicates found.")
-    else:
-        print(str(items) + " duplicates found in total")
+    for key in dicts: yield f"{dicts[key][0]} is a duplicate of {dicts[key][-1]}" if len(dicts[key]) == 2 else " ".join(
+        [dicts[key][0], "is a duplicate of", ", ".join(dicts[key][1:-1]), "and", dicts[key][-1]]), dicts[key][0]
+    print(f"{str(len(dicts)) if len(dicts) != 0 else 'No'} duplicates found.")
 
 
 def delete_files(filesList):
@@ -145,12 +132,10 @@ def main():
         stderr.writelines("You need to specify a directory!")
         exit(1)
 
-    # get files
     logging.info("Finding files...")
     filez: list = find_files(sDir)
     logging.info(f"There are {len(filez)} files")
 
-    # get all file sizes that is the same
     logging.info("Getting all file sizes...")
     fileSizes = get_file_sizes(filez)
     fileSizes = remove_non_duplicates(fileSizes)
