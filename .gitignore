@@ -131,6 +131,7 @@ dmypy.json
 # other files
 *
 !*.py
+tkinter color chart.py
 !*.md
 !requirements.txt
 !LICENSE
