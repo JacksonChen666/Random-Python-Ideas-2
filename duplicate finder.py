@@ -2,6 +2,7 @@
 import hashlib
 import logging
 import os
+from collections import Counter
 from re import IGNORECASE, search
 from sys import argv, stderr, stdout
 
@@ -9,7 +10,7 @@ logging.basicConfig(level=logging.INFO, stream=stdout)
 files = logging.getLogger("duplicates.files")
 sizes = logging.getLogger("duplicates.sizes")
 hashing = logging.getLogger("duplicates.hash")
-non_dupe = logging.getLogger("duplicates.non_duplicates")
+non_dupe = logging.getLogger("duplicates.non duplicates")
 allow_delete = True
 
 if os.name == 'nt':
@@ -30,7 +31,8 @@ else:
 
     def g():
         try:
-            tty.setraw(sys.stdin.fileno()); ch = sys.stdin.read(1)
+            tty.setraw(sys.stdin.fileno());
+            ch = sys.stdin.read(1)
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
         s = ch
@@ -39,40 +41,39 @@ else:
 
 def find_files(cDir):
     temp = []
-    for root, dirs, filez in os.walk(cDir):
-        for f in filez:
+    for root, dirs, _files in os.walk(cDir):
+        for f in _files:
             path = os.path.realpath(os.path.join(root, f))
             if not search(r".*(\.git|\.DS_Store|desktop\.ini|\.idea).*", path, IGNORECASE):
                 temp.append(path)
                 files.debug(f"File found: {path}")
-            else:
-                files.debug("Excluded file/folder found in path/file, excluding")
+                continue
+            files.debug("Excluded file/folder found in path/file, excluding")
     return temp
 
 
-def get_file_sizes(filez):
+def get_file_sizes(_files):
     fileSizeE = {}
-    for file in filez:
+    for file in _files:
         try:
             fileSizeE[file] = os.path.getsize(file)
             sizes.debug(f"File size of {file} is {fileSizeE[file]} bytes")
         except OSError:
-            filez.remove(file)  # no this isn't delete file
+            _files.remove(file)  # no this isn't delete file
             sizes.error("No permission, or file not found")
-            continue
     return fileSizeE
 
 
 def remove_non_duplicates(inp):
     non_dupe.info("Removing non-duplicates...")
-    list1 = list(inp.keys())  # {"this": "not this"}
-    list2 = list(inp.values())  # {"not this": "this"}
-    for item in list2:
-        ind = list2.index(item)
-        if ind == 1:
-            non_dupe.debug(f"{list1[ind]} is not a duplicate")
-            del list1[ind], list2[ind]
-    return dict(zip(list1, list2))  # to tuples then back to dict
+    list1, list2 = list(inp.keys()), list(inp.values())
+    counted = Counter(list2)
+    temp1 = [i for i in list2 if counted[i] == 1]
+    for i in temp1:
+        i = list2.index(i)
+        non_dupe.debug(f"{list1[i]} is not a duplicate")
+        del list1[i], list2[i]
+    return dict(zip(list1, list2))
 
 
 def get_hash(fileName, size=1024):
@@ -103,7 +104,7 @@ def duplicate_finalizing(fileHash: dict):
 def print_dupes(dicts: dict):
     for key in dicts: yield f"{dicts[key][0]} is a duplicate of {dicts[key][-1]}" if len(dicts[key]) == 2 else " ".join(
         [dicts[key][0], "is a duplicate of", ", ".join(dicts[key][1:-1]), "and", dicts[key][-1]]), dicts[key][0]
-    print(f"{str(len(dicts)) if len(dicts) != 0 else 'No'} duplicates found.")
+    print(f"{len(dicts) if len(dicts) != 0 else 'No'} duplicates found.")
 
 
 def delete_files(filesList):
@@ -125,6 +126,13 @@ def delete_files(filesList):
 
 
 def main():
+    def get_files_left(_files):
+        if len(_files) > 0:
+            get_files_left(_files)
+        else:
+            logging.info("There are no files left. Stopping.")
+            exit(0)
+
     sDir = ""
     if argv[1:]:
         sDir = argv[1]
@@ -133,34 +141,34 @@ def main():
         exit(1)
 
     logging.info("Finding files...")
-    filez: list = find_files(sDir)
-    logging.info(f"There are {len(filez)} files")
+    _files: list = find_files(sDir)
+    logging.info(f"There are {len(_files)} files")
 
     logging.info("Getting all file sizes...")
-    fileSizes = get_file_sizes(filez)
+    fileSizes = get_file_sizes(_files)
     fileSizes = remove_non_duplicates(fileSizes)
-    filez = list(fileSizes.keys())
-    logging.info(f"There are {len(filez)} files left")
+    _files = list(fileSizes.keys())
+    get_files_left(_files)
 
     logging.info("Getting part-file hashes...")
-    fileHashes = get_file_hashes(filez)  # get partly hash
+    fileHashes = get_file_hashes(_files)  # get partly hash
     fileHashes = remove_non_duplicates(fileHashes)
-    filez = list(fileHashes.keys())
-    logging.info(f"There are {len(filez)} files left")
+    _files = list(fileHashes.keys())
+    get_files_left(_files)
 
     logging.info("Getting full-file hashes...")
-    fileHashes = get_file_hashes(filez, -1)  # get entire hash
+    fileHashes = get_file_hashes(_files, -1)  # get entire hash
     fileHashes = remove_non_duplicates(fileHashes)
-    filez = list(fileHashes.keys())
-    logging.info(f"There are {len(filez)} files left")
+    _files = list(fileHashes.keys())
+    get_files_left(_files)
 
     logging.info("Finalizing...")
     duplicates = duplicate_finalizing(fileHashes)
-    filez.clear()
+    _files.clear()
     for f in print_dupes(duplicates):
         print(f[0])
-        filez.extend(f[1])
-    delete_files(filez)
+        _files.extend(f[1])
+    delete_files(_files)
 
 
 if __name__ == '__main__':
