@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 from tkinter import *
 from pygame.mixer import init, music, Sound
 from os.path import exists

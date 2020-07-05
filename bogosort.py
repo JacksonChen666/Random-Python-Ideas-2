@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 from random import shuffle
 from time import sleep, time
 from sys import argv

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import logging
 import multiprocessing as mp
 import os

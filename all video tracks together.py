@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # use ffmpeg to combine all the videos and audios into one video
 # this makes the command
 import os
