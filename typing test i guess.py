@@ -67,10 +67,11 @@ class Typing:
             self.input_box.config(state=DISABLED)
 
         te = e.keycode
-        if not (te == 8 or te == 13) and (te < 32): return "break"
+        print(e)
+        if not (te == 8 or te == 13 or te == 3342463) and (te < 32): return "break"
         if self.start_time is None: self.start_time = time()
         trueText, userInput = self.texts.get("1.0", END).rstrip(
-            "\n"), self.input_box.get() + e.char if e.keycode != 8 else self.input_box.get()[:-1]
+            "\n"), self.input_box.get() + e.char if te != 8 or te != 3342463 else self.input_box.get()[:-1]
         for tag in self.texts.tag_names(): self.texts.tag_remove(tag, "1.0", END)
         if userInput == trueText:
             self.texts.tag_add("correct", "1.0", END)
@@ -80,7 +81,6 @@ class Typing:
             self.texts.tag_add("correct", "1.0", f"1.{len(userInput)}")
         else:
             self.input_box.config(background="red")
-            if te == 8: self.total_errors += 1
             ui2 = userInput
             while not trueText.startswith(ui2): ui2 = ui2[:-1]
             lUI2, EFT = len(ui2), len(ui2) + len(userInput[len(ui2):])
@@ -98,7 +98,7 @@ class Typing:
                 except IndexError:
                     continue
             trueText = self.texts.get("1.0", END).rstrip("\n")
-            userInput = self.input_box.get() + e.char if e.keycode != 8 else self.input_box.get()[:-1]
+            userInput = self.input_box.get() + e.char if te != 8 or te != 3342463 else self.input_box.get()[:-1]
             if len(userInput) == len(trueText): end()
 
     def intervals(self):
