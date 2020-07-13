@@ -1,9 +1,13 @@
 from time import sleep
 
-from pynput.keyboard import (Controller as kController, Listener as kListener)
+from pynput.keyboard import (
+    Controller as kController,
+    Listener as kListener
+)
 from pynput.mouse import (
     Controller as mController,
-    Listener as mListener)
+    Listener as mListener
+)
 
 mouse = mController()
 keyboard = kController()

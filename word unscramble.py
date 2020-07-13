@@ -1,13 +1,15 @@
 from random import shuffle
 
+maxLen = 0
+minLen = 100
 
-def getUnscrambles(word, validWordsList: list, gen=1000, retries=3, maxLen=None, minLen=None):
-    if not maxLen: maxLen = len(max(validWordsList))
-    if not minLen: minLen = len(min(validWordsList))
+
+def getUnscrambles(word, validWordsList: list, gen=1000, retries=3):
+    global maxLen, minLen
     if len(word) > maxLen or len(word) < minLen:
         print("Too short or too long!")
         return
-    temp = []
+    temp = [word]
     tempWord = list(word)
     try:
         for r in range(retries):
@@ -18,17 +20,23 @@ def getUnscrambles(word, validWordsList: list, gen=1000, retries=3, maxLen=None,
             if len(temp) > 0: return temp
         else:
             print("No words found!")
-            return
     except KeyboardInterrupt:
         print("Canceled")
-        return
+
+def getWords():
+    global maxLen, minLen, validWords
+    with open("words_alpha.txt") as f:
+        validWords = f.read().splitlines()
+        maxLen = len(max(validWords))
+        minLen = len(min(validWords))
+    return validWords
 
 
 if __name__ == '__main__':
-    with open("words_alpha.txt") as f:
-        validWords = f.read().splitlines()
+    validWords = getWords()
     while True:
         inp = input("Word to unscramble: ")
         if not inp: break
-        words = getUnscrambles(inp, validWords)
-        print(words)
+        words = getUnscrambles(inp, validWords) or None
+        if words is None: continue
+        print(f"{words}\n")
