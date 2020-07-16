@@ -12,7 +12,7 @@ SUPPORTED_FORMATS = ["mp4"]
 
 # mp4: find this thing, then go 4 bytes (mvhd), 16 bytes ahead and read 4 bytes. those 4 bytes are the duration.
 # webm: find the TimestampScale property, and then find the duration and read 4 bytes. this is FlyTech's method.
-keywords = {"mp4": [b"mvhd"], "webm": [b"\x2A\xD7\xB1", b"\x44\x89"]}
+keywords = {"mp4": [b"mvhd"]}
 
 
 class Exceptions(Exception):
@@ -57,18 +57,10 @@ class Video:
         def tb(format=self.format):
             if format == "mp4":
                 return t[t.index(keywords["mp4"][0]) + 20:][:4]
-            elif format == "webm":
-                return t[t.index(keywords["webm"][0]):][t.index(keywords["webm"][1]):][:4]
 
         def ch(format=self.format):
             if format == "mp4":
                 return not (keywords["mp4"][0] in t and len(tb()) == 4)
-            elif format == "webm":
-                try:
-                    t[t.index(keywords["webm"][0]):][t.index(keywords["webm"][1]):][:4]
-                except ValueError:
-                    return False
-                return (keywords["webm"][0] in t and keywords["webm"][1] in t) and len(tb()) == 4
             else:
                 raise UnsupportedFormat(format=format)
 
@@ -80,11 +72,7 @@ class Video:
                 raise DurationNotFound
 
         self.duration = int(from_hex(tb()), 16) / self.second
-        if self.format == "mp4":
-            self.durLocation = t.index(keywords["mp4"][0]) + 20
-        else:
-            ti = t.index(keywords["webm"][0])
-            self.durLocation = t[ti:].index(keywords["webm"][1]) + ti
+        self.durLocation = t.index(keywords["mp4"][0]) + 20
         return self.duration
 
     def modify_duration(self, seconds, rewrite=False, byteString=False):
