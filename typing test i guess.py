@@ -152,7 +152,7 @@ class Typing:
         temp_zip.write(lorem_zip)
         temp_zip.close()
         with zf.ZipFile(temp_zip.name) as z:
-            with z.open("lorem.txt") as f: lorem = f.read().decode("utf-8").splitlines()
+            with z.open("lorem.txt") as f: lorem = f.read_duration().decode("utf-8").splitlines()
         remove(temp_zip.name)
         return lorem
 

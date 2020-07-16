@@ -1,10 +1,12 @@
 from random import shuffle
-from time import sleep, time
 from sys import argv
+from time import sleep, time
+
 
 def returnShuffle(lists):
     shuffle(lists)
     return lists
+
 
 num = int(argv[1]) if len(argv) >= 2 else 5
 oList = [i for i in range(num)]
