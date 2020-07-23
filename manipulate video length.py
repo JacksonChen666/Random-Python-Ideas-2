@@ -28,7 +28,7 @@ class UnsupportedFormat(Exceptions):
 class NotFound(Exceptions):
     def __init__(self, message=None):
         """Check your source video file. Can you see a preview? Can you play it not via VLC?"""
-        super().__init__(message or "Information not found in video.")
+        super().__init__(message or "Information not found in video. Try setting a higher limit or 0.")
 
 
 class InputTooShort(Exceptions):
@@ -38,7 +38,7 @@ class InputTooShort(Exceptions):
 
 
 class Video:
-    def __init__(self, fileName, format=None):
+    def __init__(self, fileName, format=None, limit=1024):
         """Initializations. Should've already read the durations."""
         self.fileName = fileName
         self.format = format or fileName.rpartition(".")[2].lower()
@@ -48,7 +48,8 @@ class Video:
         self.second = VideoCapture(self.fileName).get(CAP_PROP_FPS) * 1000
         self.duration, self.durLocation = None, None
         self.time_scale, self.tsLoc = None, None
-        self.read_duration(force=True)
+        self.read_duration(force=True, limit=limit)
+        self.read_time_scale(force=True, limit=limit)
 
     def read_duration(self, limit=1024, force=False):
         """Reads the duration of the video file directly. 1 second is 1000 * Video FPS"""
@@ -67,7 +68,7 @@ class Video:
 
         with open(self.fileName, "rb") as f:
             t = b""
-            while len(t) < limit and ch():
+            while (len(t) < limit or not limit) and ch():
                 t += f.read(64)
             if ch():
                 raise NotFound
@@ -93,8 +94,6 @@ class Video:
         if self.duration is None or self.durLocation is None:
             self.read_duration()
         dur = to_hex_bytes(seconds * self.second) if not byteString else seconds
-        # if (not byteString and len(dur) != 8) or (byteString and len(dur) != 4):
-        #     raise IncorrectHexLength
         if rewrite or system() == "Darwin":  # according to open help, some systems will append no matter what.
             print("Rewrite is enabled. This might take a while...")
             with open(self.fileName, "rb") as f:
@@ -128,7 +127,7 @@ class Video:
 
         with open(self.fileName, "rb") as f:
             t = b""
-            while len(t) < limit and ch():
+            while (len(t) < limit or not limit) and ch():
                 t += f.read(64)
             if ch():
                 raise NotFound

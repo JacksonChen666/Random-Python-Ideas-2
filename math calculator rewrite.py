@@ -1,6 +1,6 @@
-from tkinter import *
 import logging.handlers
 import statistics
+from tkinter import *
 
 
 def safe_eval(expression):
@@ -14,7 +14,6 @@ def safe_eval(expression):
         "mean": statistics.mean,
         "median": statistics.median,
     }
-    compiled = ""
     try:
         complied = compile(expression, "<string>", "eval")
     except (SyntaxError,) as err:
@@ -28,8 +27,6 @@ def safe_eval(expression):
     except (TypeError,) as err:
         logger.exception("Error: {}".format(err))
         return err
-
-
 
 
 class GUI:
@@ -56,16 +53,13 @@ class GUI:
         self.helpBtn.grid(row=2, column=0, sticky="nesw")
         self.calcBtn.grid(row=2, column=1, sticky="nesw")
 
-        self.numEnt.bind("<Return>", self.calculate2)
+        self.numEnt.bind("<Return>", self.calculate)
         self.window.mainloop()
 
-    def calculate(self):
+    def calculate(self, e=None):
         if self.numEnt.get():
             ans = safe_eval(self.numEnt.get())
             self.finalEnt.config(text=ans)
-
-    def calculate2(self, e):
-        self.calculate()
 
     @staticmethod
     def help():

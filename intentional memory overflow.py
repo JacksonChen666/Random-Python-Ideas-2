@@ -34,7 +34,6 @@ def processesCheck():
 
 
 def memoryOverflow(ramLevel=amountOfRam):
-    global finished
     d = "\x00" * (2 ** 30 * int(ramLevel))
     memOverflow.info(f"Finished with {ramLevel}GB ram taken")
     while True: sleep(1000000)

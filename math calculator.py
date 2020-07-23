@@ -1,5 +1,5 @@
 """
-Math except the software does it and not you
+Math except the program does it and not you
 """
 import math
 import re
@@ -115,7 +115,7 @@ class GUIAndMath:
         self.window.update()
 
     def validation(self, text, setting):
-        if not re.search("\d+|\d*\.\d+", text):
+        if not re.search(r"\d+|\d*\.\d+", text):
             setting.set("")
             self.setList()
             return False
@@ -437,7 +437,7 @@ class GUIAndMath:
             return math.ceil(num)
         elif upDown.lower() == "down":
             return math.floor(num)
-        elif upDown is None:
+        else:
             return round(num)
 
 
