@@ -6,12 +6,12 @@ words = {
     "result": ["undo", "redo", "redid", "undid"],
     "ending": ["which"],
 }
-loop = randint(2, len(words["action"]) ** len(words["result"]) ** len(words["ending"]))
-maxLoops = 100
+maxLoops = len(words["action"]) ** len(words["result"]) ** len(words["ending"])
+maxLooping = 100
 
 
-def create_sentence(maxLoop=maxLoops):
-    sentence, currentLoop = [prefix], 0
+def create_sentence(maxLoop=maxLooping):
+    sentence, currentLoop, loop = [prefix], 0, randint(2, maxLoops)
     while loop > len(sentence):
         sentence = list(dict.fromkeys(
             sentence + [f"{choice(words['action'])} {choice(words['result'])}, {choice(words['ending'])} "]
@@ -23,4 +23,4 @@ def create_sentence(maxLoop=maxLoops):
 
 if __name__ == '__main__':
     for i in range(1000):
-        print(create_sentence(1000))
+        print(create_sentence())

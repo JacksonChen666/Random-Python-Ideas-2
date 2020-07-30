@@ -11,7 +11,8 @@ from cv2 import CAP_PROP_FPS, VideoCapture
 SUPPORTED_FORMATS = ["mp4"]
 
 # mp4: find this thing, then go 4 bytes (mvhd), 16 bytes ahead and read 4 bytes. those 4 bytes are the duration.
-# webm: find the TimestampScale property, and then find the duration and read 4 bytes. this is FlyTech's method.
+# webm: find the TimestampScale property, and then find the duration and read 4 bytes (maybe both unit time and time).
+# this is FlyTech's method.
 keywords = {"mp4": [b"mvhd"]}
 
 
