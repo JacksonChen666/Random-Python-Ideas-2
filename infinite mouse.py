@@ -19,10 +19,10 @@ from pynput.keyboard import Key
 # pixels away from side
 # The currently active modifiers
 # screen size to check for edge
-COMBINATIONS, awayFrom, current, tNow, tCounter, up, down, left, right, screen_width, screen_height = [{
-    keyboard.Key.shift,
-    keyboard.Key.esc}], 3, set(), datetime.datetime.now(), 0, "↑", "↓", "←", "→", tk.Tk().winfo_screenwidth(), \
-                                                                                                      tk.Tk().winfo_screenheight()
+COMBINATIONS, awayFrom, current, tNow, tCounter, = [{keyboard.Key.shift, keyboard.Key.esc}], \
+                                                   3, set(), datetime.datetime.now(), 0
+up, down, left, right = "↑", "↓", "←", "→"
+screen_width, screen_height = tk.Tk().winfo_screenwidth(), tk.Tk().winfo_screenheight()
     
 
 def to_left():
