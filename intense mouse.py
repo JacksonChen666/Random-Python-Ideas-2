@@ -33,6 +33,7 @@ if __name__ == '__main__':
             if isinf(intensity): intensity = startInt
             print("\r{0}\tpixels max/move".format(intensity), end="", flush=True)
             for i in range(5):
+                # noinspection PyTypeChecker
                 mouse.move(uniform(-intensity, intensity), uniform(-intensity, intensity))
             intensity *= iMultiplier
     except KeyboardInterrupt:
