@@ -49,8 +49,8 @@ class Video:
         self.time_scale, self.ts_loc = 0, 0
         self.seconds = 0
         self._limit = limit
-        self.SUPPORTED_FORMATS = ["mp4"]
-        self.loc_keywords = {"mp4": [b"mvhd"]}
+        self._SUPPORTED_FORMATS = ["mp4"]
+        self._LOC_KEYWORDS = {"mp4": [b"mvhd"]}
         self.read_time(limit=limit, force=True)
 
     def _locate(self, text: bytes, start_loc: int, format: str):
@@ -62,7 +62,7 @@ class Video:
         :return: Bytes of data
         """
         if format == "mp4":
-            return text[text.index(self.loc_keywords["mp4"][0]) + start_loc:][:4]
+            return text[text.index(self._LOC_KEYWORDS["mp4"][0]) + start_loc:][:4]
         else:
             raise UnsupportedFormat(format=format)
 
@@ -77,7 +77,7 @@ class Video:
         :raise: UnsupportedFormat if the format given is unsupported
         """
         if format == "mp4":
-            return self.loc_keywords["mp4"][0] in text and len(self._locate(text, start_loc, format)) == req_len
+            return self._LOC_KEYWORDS["mp4"][0] in text and len(self._locate(text, start_loc, format)) == req_len
         else:
             raise UnsupportedFormat(format=format)
 
@@ -100,7 +100,7 @@ class Video:
                 raise NotFoundError
 
         self.duration = int(self._from_hex(self._locate(t, 20, self._format)), 16)
-        self.dur_loc = t.index(self.loc_keywords["mp4"][0]) + 20
+        self.dur_loc = t.index(self._LOC_KEYWORDS["mp4"][0]) + 20
         return self.duration
 
     def _read_time_scale(self, limit: int = 1024, force: bool = False):
@@ -122,7 +122,7 @@ class Video:
                 raise NotFoundError
 
         self.time_scale = int(self._from_hex(self._locate(t, 16, self._format)), 16)
-        self.ts_loc = t.index(self.loc_keywords["mp4"][0]) + 16
+        self.ts_loc = t.index(self._LOC_KEYWORDS["mp4"][0]) + 16
         return self.time_scale
 
     def __modify(self, seconds: int or bytes, loc: int, time_scale: bool = False, data_len: int = 4,
