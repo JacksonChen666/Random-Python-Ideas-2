@@ -70,11 +70,8 @@ class Video:
                 f.write(dur)
                 f.seek(loc)
                 if f.read(4) != dur:
-                    print("Changes may have failed to apply. Reviewing...")
-                    f.seek(f.tell() - 4)
-                    if f.read(4) == dur:
-                        print("Yep, changes are at the end. Truncating...")
-                        f.truncate(f.tell() - 4)
+                    print("Changes may have failed to apply. Rewriting...")
+                    self.__modify(seconds, loc, time_scale=time_scale, rewrite=True)
         self.read_time(limit=self._limit, force=True)
 
     @staticmethod
@@ -106,14 +103,16 @@ class Video:
         return self.seconds
 
     def modify_time(self, duration: int or bytes, time_scale: int or bytes = None, rewrite: bool = False):
-        """You can modify the time displayed"""
+        """You can modify the time displayed.
+        The lower the time scale, the more time you can squeeze, but with less float precision.
+        The higher the time scale, the more precise the seconds can be, but with less time."""
         if rewrite: print("Rewrite is enabled. This might take a while...")
         if time_scale: self.__modify(time_scale, self.ts_loc, time_scale=True, rewrite=rewrite)
         if duration: self.__modify(duration, self.dur_loc, rewrite=rewrite)
 
 
 if __name__ == '__main__':
-    e = Video("mp4.mp4")
-    print(e)
-    e.modify_time(10, 1000, rewrite=True)
-    print(e)
+    vid = Video("mp4.mp4")
+    print(vid)
+    vid.modify_time(b"\xff\xff\xff\xff", 1)
+    print(vid)
