@@ -6,8 +6,6 @@ mp4
 """
 from platform import system
 
-from cv2 import CAP_PROP_FPS, VideoCapture
-
 SUPPORTED_FORMATS = ["mp4"]
 
 # mp4: find this thing, then go 4 bytes (mvhd), 16 bytes ahead and read 4 bytes. those 4 bytes are the duration.
@@ -22,6 +20,7 @@ class Exceptions(Exception):
 
 class UnsupportedFormat(Exceptions):
     """I don't know how this format works"""
+
     def __init__(self, message=None, format=None):
         super().__init__(message or "Unsupported format. Please check if you have chosen the format correctly", format)
 
@@ -46,9 +45,9 @@ class Video:
         self.format = self.format.lower()
         if not any([f in self.format for f in SUPPORTED_FORMATS]):
             raise UnsupportedFormat(format=self.format)
-        self.second = VideoCapture(self.fileName).get(CAP_PROP_FPS) * 1000
-        self.duration, self.durLocation = None, None
         self.time_scale, self.tsLoc = None, None
+        self.second = None
+        self.duration, self.durLocation = None, None
         self.read_duration(force=True, limit=limit)
         self.read_time_scale(force=True, limit=limit)
 
@@ -56,6 +55,8 @@ class Video:
         """Reads the duration of the video file directly. 1 second is 1000 * Video FPS"""
         if not force and self.duration is not None:
             return self.duration
+        if not self.time_scale:
+            self.read_time_scale(force=True, limit=limit)
 
         def tb(format=self.format):
             if format == "mp4":
@@ -112,7 +113,7 @@ class Video:
                         print("Confirmed: Changes are at the end of file.")
 
     def read_time_scale(self, limit=1024, force=False):
-        """Reads the duration of the video file directly. 1 second is 1000 * Video FPS"""
+        """Reads the duration of the video file directly."""
         if not force and self.time_scale is not None:
             return self.time_scale
 
@@ -162,7 +163,7 @@ class Video:
                 f.seek(self.tsLoc)
                 f.write(time_scale)
                 if f.read(4) != time_scale:
-                    print("Changes may not be applied. Use rewrite if not working. Reverting changes...")
+                    print("Changes may not be applied. Use rewrite if not working. Reviewing changes...")
                     f.seek(f.tell() - 4)
                     if f.read() == time_scale:
                         print("Confirmed: Changes are at the end of file.")
