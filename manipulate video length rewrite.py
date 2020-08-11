@@ -54,10 +54,10 @@ class Video:
         self.ts_loc = t.index(loc_keywords["mp4"][0]) + 16
         return self.time_scale
 
-    def __modify(self, seconds: int or bytes, loc: int, rewrite: bool = False):
+    def __modify(self, seconds: int or bytes, loc: int, time_scale: bool = False, rewrite: bool = False):
         if type(seconds) != int and len(seconds) != 4:
             raise Exception("Input size incorrect")
-        dur = self.to_hex_bytes(seconds * self.time_scale) if type(seconds) != bytes else seconds
+        dur = self.to_hex_bytes(seconds * self.time_scale if not time_scale else seconds) if type(seconds) != bytes else seconds
         if rewrite:
             with open(self.fileName, "ab+") as f:
                 f.seek(0)
@@ -108,13 +108,12 @@ class Video:
     def modify_time(self, duration: int or bytes, time_scale: int or bytes = None, rewrite: bool = False):
         """You can modify the time displayed"""
         if rewrite: print("Rewrite is enabled. This might take a while...")
-        if time_scale: self.__modify(time_scale, self.ts_loc, rewrite=rewrite)
+        if time_scale: self.__modify(time_scale, self.ts_loc, time_scale=True, rewrite=rewrite)
         if duration: self.__modify(duration, self.dur_loc, rewrite=rewrite)
 
 
 if __name__ == '__main__':
     e = Video("mp4.mp4")
     print(e)
-    e.modify_time(10, rewrite=True)
-    e.read_time(force=True)
+    e.modify_time(10, 1000, rewrite=True)
     print(e)
