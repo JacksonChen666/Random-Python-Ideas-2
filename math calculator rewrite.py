@@ -13,6 +13,7 @@ def safe_eval(expression):
         "sorted": sorted,
         "mean": statistics.mean,
         "median": statistics.median,
+        "range": range
     }
     try:
         complied = compile(expression, "<string>", "eval")
