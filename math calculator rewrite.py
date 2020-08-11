@@ -16,7 +16,7 @@ def safe_eval(expression):
     }
     try:
         complied = compile(expression, "<string>", "eval")
-    except (SyntaxError,) as err:
+    except SyntaxError as err:
         logging.exception("Error: {}".format(err))
         return err
     for name in complied.co_names:
@@ -24,7 +24,7 @@ def safe_eval(expression):
             raise NameError(f"A unsafe expression '{name}' has been found during evaluation")
     try:
         return eval(complied, {"__builtins__": {}}, safe_expressions)
-    except (TypeError,) as err:
+    except TypeError as err:
         logger.exception("Error: {}".format(err))
         return err
 

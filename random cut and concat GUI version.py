@@ -288,7 +288,7 @@ class tkWin:
                 concatenate_videoclips(outputs[i]).write_videofile(
                     os.path.join(directory, 'FINAL-{}.MP4'.format(i + 1)), threads=cpu_count() * 2,
                     preset=ffmpeg_preset)
-            except (AttributeError,):
+            except AttributeError:
                 self.statusUpdate("oops! error:\n{}\nskipping".format(tc.format_exc()))
                 logging.exception("Exception-ed")
         self.statusUpdate("Done", True)

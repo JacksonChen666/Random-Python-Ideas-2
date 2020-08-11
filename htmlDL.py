@@ -60,7 +60,7 @@ def validateURL(fullURL):
         else:
             logging.warning("URL is invalid")
             return False
-    except (TypeError,):
+    except TypeError:
         logging.exception("Unable to verify URL")
         return False
 
