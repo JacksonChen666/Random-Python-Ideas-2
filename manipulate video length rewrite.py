@@ -1,8 +1,3 @@
-SUPPORTED_FORMATS = ["mp4"]
-
-loc_keywords = {"mp4": [b"mvhd"]}
-
-
 class Video:
     def __init__(self, fileName: str, format: str = None, limit: int = 1024):
         self.fileName = fileName
@@ -11,16 +6,17 @@ class Video:
         self.time_scale, self.ts_loc = 0, 0
         self.seconds = 0
         self._limit = limit
+        self.SUPPORTED_FORMATS = ["mp4"]
+        self.loc_keywords = {"mp4": [b"mvhd"]}
         self.read_time(limit=limit, force=True)
 
-    @staticmethod
-    def _locate(text: bytes, start_loc: int, format: str):
+    def _locate(self, text: bytes, start_loc: int, format: str):
         if format == "mp4":
-            return text[text.index(loc_keywords["mp4"][0]) + start_loc:][:4]
+            return text[text.index(self.loc_keywords["mp4"][0]) + start_loc:][:4]
 
     def _check(self, text: bytes, start_loc: int, format: str):
         if format == "mp4":
-            return loc_keywords["mp4"][0] in text and len(self._locate(text, start_loc, format))
+            return self.loc_keywords["mp4"][0] in text and len(self._locate(text, start_loc, format))
 
     def _read_duration(self, limit: int = 1024, force: bool = False):
         """Reads the duration of the video directly. Time scale is required to calculate the seconds"""
@@ -35,7 +31,7 @@ class Video:
                 raise Exception("Not found")
 
         self.duration = int(self.from_hex(self._locate(t, 20, self._format)), 16)
-        self.dur_loc = t.index(loc_keywords["mp4"][0]) + 20
+        self.dur_loc = t.index(self.loc_keywords["mp4"][0]) + 20
         return self.duration
 
     def _read_time_scale(self, limit: int = 1024, force: bool = False):
@@ -51,13 +47,14 @@ class Video:
                 raise Exception("Not found")
 
         self.time_scale = int(self.from_hex(self._locate(t, 16, self._format)), 16)
-        self.ts_loc = t.index(loc_keywords["mp4"][0]) + 16
+        self.ts_loc = t.index(self.loc_keywords["mp4"][0]) + 16
         return self.time_scale
 
     def __modify(self, seconds: int or bytes, loc: int, time_scale: bool = False, rewrite: bool = False):
         if type(seconds) != int and len(seconds) != 4:
             raise Exception("Input size incorrect")
-        dur = self.to_hex_bytes(seconds * self.time_scale if not time_scale else seconds) if type(seconds) != bytes else seconds
+        dur = self.to_hex_bytes(seconds * self.time_scale if not time_scale else seconds) if type(
+            seconds) != bytes else seconds
         if rewrite:
             with open(self.fileName, "ab+") as f:
                 f.seek(0)
