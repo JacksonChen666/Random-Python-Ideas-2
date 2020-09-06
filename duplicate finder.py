@@ -16,7 +16,7 @@ def find_files(cDir):
     for root, dirs, _files in os.walk(cDir):
         for f in _files:
             path = os.path.realpath(os.path.join(root, f))
-            if any([i in path for i in [".git", ".DS_Store", "desktop.ini", ".idea"]]):
+            if any([i in path for i in [".git", ".DS_Store", "desktop.ini", ".idea", ".app", "__pycache__"]]):
                 files.debug("Excluded file/folder found in path/file, excluding")
                 continue
             temp.append(path)
@@ -31,8 +31,8 @@ def get_file_sizes(_files):
             fileSizeE[file] = os.path.getsize(file)
             sizes.debug(f"File size of {file} is {fileSizeE[file]} bytes")
         except OSError:
-            _files.remove(file)  # no this isn't delete file you idiot
             sizes.error("No permission, or file not found")
+            # continue
     return fileSizeE
 
 
@@ -47,14 +47,14 @@ def remove_non_duplicates(inp):
     return dict(zip(list1, list2))
 
 
-def get_hash(fileName, size=1024):
+def get_hash(fileName, size=2048):
     with open(fileName, "rb") as f: text = f.read(size) if size > 0 else f.read()
-    hashes = hashlib.sha1(text).hexdigest()
+    hashes = hashlib.md5(text).hexdigest()
     hashing.debug(f"Hash for {fileName} is {hashes}")
     return hashes
 
 
-def get_file_hashes(filesList, size=1024):
+def get_file_hashes(filesList, size=2048):
     fileHashesTemp = {}
     for f in filesList: fileHashesTemp[f] = get_hash(f, size)
     return fileHashesTemp
@@ -63,10 +63,10 @@ def get_file_hashes(filesList, size=1024):
 def duplicate_finalizing(fileHash: dict):
     tDict = {}
     for i in list(fileHash.items()):
-        try:
+        if i[1] in tDict:
             tDict[i[1]] += (i[0],)
-        except KeyError:
-            tDict[i[1]] = (i[0],)
+            continue
+        tDict[i[1]] = (i[0],)
     for i in list(tDict.items()):  # delete all with no duplicates
         if len(i[1]) == 1: del tDict[i[0]]
     return tDict
@@ -97,10 +97,10 @@ def main():
     _files = get_files_left(remove_non_duplicates(get_file_sizes(_files)))
 
     logging.info("Getting part-file hashes...")
-    _files = get_files_left(remove_non_duplicates(get_file_hashes(_files)))  # get partly hash
+    _files = get_files_left(remove_non_duplicates(get_file_hashes(_files)))  # get part-file hash
 
     logging.info("Getting full-file hashes...")
-    fileHashes = get_files_left(remove_non_duplicates(get_file_hashes(_files, -1)))  # get entire hash
+    fileHashes = get_files_left(remove_non_duplicates(get_file_hashes(_files, -1)))  # get full-file hash
 
     logging.info("Finalizing...")
     dps = duplicate_finalizing(fileHashes)

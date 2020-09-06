@@ -3,10 +3,6 @@ pynput
 DateTime
 requests
 pygame
-PyAutoGUI
 pydub
-moviepy
-torch
-argparse
 Pillow
-opencv-python
+PyAutoGUI
