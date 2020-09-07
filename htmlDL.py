@@ -10,6 +10,7 @@ from urllib.parse import *
 import requests as r
 
 oLoc, TEMP_FOLDER = os.getcwd(), "htmlDL TEMP"
+validate_url = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
 
 
 def getPage(fullURL):
@@ -19,7 +20,8 @@ def getPage(fullURL):
 
 def download(fullURL, fileName=None, dirName="htmlDL"):
     fullURL: str
-    if not validateURL(fullURL): return False
+    if not validateURL(fullURL):
+        return False
     logging.info("Downloading HTML file...")
     x = r.get(fullURL)
     logging.debug("Filename checks...")
@@ -28,18 +30,23 @@ def download(fullURL, fileName=None, dirName="htmlDL"):
         parsed = urlparse(fullURL)
         try:
             fileName = str(re.search(r'\s*<title>(.+)</title>\s*', x.text, re.IGNORECASE).group(1))
-            if re.search(r'(<title>|</title>)', fileName): fileName = re.sub(r'(<title>|</title>)+.*', '', fileName)
-            if len(fileName) >= 255: raise Exception("File name is too long")
+            if re.search(r'(<title>|</title>)', fileName):
+                fileName = re.sub(r'(<title>|</title>)+.*', '', fileName)
+            if len(fileName) >= 255:
+                raise Exception("File name is too long")
         except (AttributeError, Exception):
             logging.exception("Unable to find title or file too long")
             fileName = parsed.path.split("/")[-1] if parsed.path != "" else "index"
             fileName = fileName[:-1] if fileName.endswith("/") else fileName
         folders = [dirName, parsed.netloc]
         folders.extend(parsed.path.split("/"))
-        if not str(parsed.path).rfind("."): folders = folders[:-1]
+        if not str(parsed.path).rfind("."):
+            folders = folders[:-1]
         for f in folders:
-            if not f: continue
-            if not os.path.isdir(f): os.mkdir(f)
+            if not f:
+                continue
+            if not os.path.isdir(f):
+                os.mkdir(f)
             os.chdir(f)
         fileName = re.sub(r'[^\x00-\x7F]+', '_', fileName)
     logging.info("Writing HTML file...")
@@ -54,7 +61,7 @@ def download(fullURL, fileName=None, dirName="htmlDL"):
 def validateURL(fullURL):
     logging.debug("Validating URL...")
     try:
-        if re.findall(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', fullURL) != '':
+        if re.findall(validate_url, fullURL) != '':
             logging.debug("URL is valid")
             return True
         else:
@@ -68,12 +75,12 @@ def validateURL(fullURL):
 def findURLs(fullURL, allowExternalDomains=False, dirName=TEMP_FOLDER):
     fileName = download(fullURL, dirName=dirName)
     urls = list(dict.fromkeys(
-            re.findall(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',
-                       open(fileName).read())))
+        re.findall(validate_url, open(fileName).read())))
     if not allowExternalDomains:
         domain = urlparse(fullURL).netloc
         for i in urls:
-            if urlparse(i).netloc != domain: urls.remove(i)
+            if urlparse(i).netloc != domain:
+                urls.remove(i)
     logging.info("Finished finding URLs")
     return urls
 
