@@ -6,3 +6,5 @@ pygame
 pydub
 Pillow
 PyAutoGUI
+progress
+numpy
