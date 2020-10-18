@@ -1,11 +1,15 @@
 import os
 
-from PIL import Image
+import PIL
 import time
 
 
 def process_img(filename: str, new_filename: str):
-    im = Image.open(filename)
+    try:
+        im = PIL.Image.open(filename)
+    except PIL.UnidentifiedImageError:
+        print(f"wtf is that")
+        return
     if im.size != (1242, 2208):
         print(f"Not original size")
         return False
