@@ -1,6 +1,5 @@
 future
 pynput
-DateTime
 requests
 pygame
 pydub
