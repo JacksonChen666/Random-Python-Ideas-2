@@ -1,18 +1,19 @@
 import datetime
 import os
+import time
 
 import tweepy
-import time
 
 auth = tweepy.OAuthHandler(os.getenv("ConKey"), os.getenv("ConSec"))
 auth.set_access_token(os.getenv("AccTok"), os.getenv("AccTokSec"))
 
 api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
+yes = ["yes", "y"]
 
 
 def filterTweets(tweetsList):
     def addToList(interactedTweet, _user):
-        if interactedTweet.author not in followings:
+        if not interactedTweet.author.following:
             return
         if _user.screen_name in _interacted_users.keys():
             now = datetime.datetime.utcnow()
@@ -63,6 +64,16 @@ def strf_runningtime(tdelta, round_period='second'):
     return s
 
 
+def askToUnfollow(user, lastInteraction):
+    while True:
+        inp = input(
+            f"Would you like to unfollow \"{user.name}\"? (@{user.screen_name}, Last interaction: {lastInteraction}) "
+            f"[yN] ").lower()
+        if inp and inp in yes:
+            user.unfollow()
+        return
+
+
 if __name__ == '__main__':
     username = auth.get_username()
 
@@ -70,30 +81,30 @@ if __name__ == '__main__':
     start = time.time()
     followings = [u for u in tweepy.Cursor(api.friends, count=200).items()]
     end = time.time()
-    print(f"Took {strf_runningtime(datetime.timedelta(seconds=(end - start)), 'millisecond')}")
+    print(f"Took {strf_runningtime(datetime.timedelta(seconds=(end - start)), 'millisecond') or 'too little time'}")
 
     print("Getting tweeted/retweeted/liked tweets. This will take a while...", end=" ")
     start = time.time()
     tweets = [t for t in tweepy.Cursor(api.user_timeline, id=username, count=200, include_rts=True).items()]
     tweets.extend([t for t in tweepy.Cursor(api.favorites, id=username, count=200, include_rts=True).items()])
     end = time.time()
-    print(f"Took {strf_runningtime(datetime.timedelta(seconds=(end - start)), 'millisecond')}")
+    print(f"Took {strf_runningtime(datetime.timedelta(seconds=(end - start)), 'millisecond') or 'too little time'}")
 
     print(f"Processing {len(tweets)} tweets...", end=" ")
     start = time.time()
     interactedUsersTweets = filterTweets(tweets)
-    noInteractFollowings = [user for tweet, user, time in interactedUsersTweets.values() if user not in followings]
+    users = [user for tweet, user, time in interactedUsersTweets.values()]
+    noInteractFollowings = [u for u in followings if u.following and u not in users]
     end = time.time()
-    print(f"Took {strf_runningtime(datetime.timedelta(seconds=(end - start)), 'millisecond')}")
+    print(f"Took {strf_runningtime(datetime.timedelta(seconds=(end - start)), 'millisecond') or 'too little time'}")
 
-    print("Done! Now you can unfollow anyone who you haven't been interacting in some time")
+    print("Done! Now you can unfollow anyone who you haven't been interacting in some time.")
     if noInteractFollowings:
-        print("\nList of people you haven't interacted in way too long to even date back:")
         for user in noInteractFollowings:
-            print(f"@{user.screen_name}")
+            askToUnfollow(user, "Undetermined")
     if interactedUsersTweets:
-        print("\nList of people you haven't interacted in some time:")
         temp = {time: user for tweet, user, time in interactedUsersTweets.values()}
         temp = {k: temp[k] for k in reversed(sorted(temp))}
         for time, user in temp.items():
-            print(f"@{user.screen_name} ({strf_runningtime(time, 'minute')})")
+            askToUnfollow(user, strf_runningtime(time, 'minute'))
+    print("You are all done!")
