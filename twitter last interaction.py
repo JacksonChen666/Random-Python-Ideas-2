@@ -136,7 +136,7 @@ if __name__ == '__main__':
     end = time.time()
     print(f"Took {strf_runningtime(datetime.timedelta(seconds=(end - start)), 'millisecond') or 'too little time'}")
 
-    print(f"Processing other things that must be post-processed...", end=" ")
+    print("Processing other things that must be post-processed...", end=" ")
     start = time.time()
     users = [user for tweet, user, time in interactions.values()]
     noInteractFollowings = [u for u in followings if u.following and u not in users]
