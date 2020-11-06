@@ -2,8 +2,14 @@
 This program takes a folder of videos, pick a random spot, and then just combine it into a videosEnt and done
 """
 import logging
+from os import path, listdir
+from random import uniform, randint, shuffle
 import tkinter as tk
+import traceback as tc
+from multiprocessing import cpu_count
 from tkinter import filedialog, messagebox
+
+from moviepy.editor import VideoFileClip, concatenate
 
 
 class tkWin:
@@ -118,7 +124,8 @@ class tkWin:
         :return: Nothing
         """
         self.varStatus.set(statusText)
-        if allowPrint: print(statusText)
+        if allowPrint:
+            print(statusText)
         return
 
     def selectFolder(self):
@@ -129,7 +136,8 @@ class tkWin:
         global t
         import threading
         import os
-        if self.folder_selected: return False
+        if self.folder_selected:
+            return False
         try:  # validate the nums
             int(self.varXdim.get())
             int(self.varYdim.get())
@@ -146,7 +154,7 @@ class tkWin:
         self.window.update()
         self.folder_selected = filedialog.askdirectory(title="Directory of the videos")
         self.window.update()
-        if self.folder_selected == '' and not os.path.isfile(self.folder_selected):
+        if self.folder_selected == '' and not path.isfile(self.folder_selected):
             self.window.update()
             self.window.focus_force()
             return False
@@ -226,22 +234,21 @@ class tkWin:
         :param amountOfVideos: Amount of different videos to make.
         :return: A Video.
         """
-        import os, random
-
         # compile list of videos
         videoFormats = ('.mp4', '.mkv', '.webm', '.mov', '.flv', '.avi', '.m4a', '.m4v', '.f4v', '.f4a')
-        clips = [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith(videoFormats) and
-                 os.path.isfile(os.path.join(directory, f)) and "FINAL-" not in f]
+        clips = [path.join(directory, f) for f in listdir(directory) if f.endswith(videoFormats) and
+                 path.isfile(path.join(directory, f)) and "FINAL-" not in f]
         logging.debug("Clips: {}".format(clips))
         inputs = []
         for i in range(amountOfVideos):
-            tempInputs = [q for i in range(int(repeats)) for q in clips if random.randint(0, 100) >= float(
+            tempInputs = [q for i in range(int(repeats)) for q in clips if randint(0, 100) >= float(
                 discardedClipsPercent)]  # randomly selects from original full list
-            random.shuffle(tempInputs)
+            shuffle(tempInputs)
             inputs.append(tempInputs.copy())
         logging.debug("Randomly selected clips: {}".format(inputs))
         aClips = 0
-        for i in inputs: aClips += len(i)
+        for i in inputs:
+            aClips += len(i)
         if 500 < aClips < 10000:
             logging.warning("Exceeded normal limit of 500, might be dangerous if it takes over system ram")
             if messagebox.askokcancel("a lotta clips",
@@ -261,20 +268,18 @@ class tkWin:
         self.changeButtons(True)
         self.statusUpdate("Importing...")
         logging.debug("Importing modules required to continue...")
-        from multiprocessing import cpu_count
-        from moviepy.editor import VideoFileClip, concatenate_videoclips
-        import traceback as tc
         logging.debug("Finished importing")
 
         output, outputs = [], []
-        self.statusUpdate("Thread count of export process: {0}".format(str(cpu_count() * 2)), True)
+        threads_count = cpu_count() * 2
+        self.statusUpdate("Thread count of export process: {0}".format(str(threads_count)), True)
         self.statusUpdate("Cutting...")
         for v in inputs:
             for c in v:
                 logging.info("\rCutting {}".format(c))
                 clip = VideoFileClip(c).resize((int(xDim), int(yDim)))
-                length = round(random.uniform(float(minLength), float(maxLength)), 2)
-                start = round(random.uniform(0, clip.duration - length), 2)
+                length = round(uniform(float(minLength), float(maxLength)), 2)
+                start = round(uniform(0, clip.duration - length), 2)
                 try:
                     output.append(clip.subclip(start, start + length))
                 except OSError:
@@ -282,11 +287,11 @@ class tkWin:
                     logging.exception("Exception-ed")
             outputs.append(output.copy())
             output.clear()
-        self.statusUpdate("Writing {} video(s)... Thread count: {}.".format(str(amountOfVideos), str(cpu_count() * 2)))
+        self.statusUpdate("Writing {} video(s)... Thread count: {}.".format(str(amountOfVideos), str(threads_count)))
         for i in range(len(outputs)):
             try:
-                concatenate_videoclips(outputs[i]).write_videofile(
-                    os.path.join(directory, 'FINAL-{}.MP4'.format(i + 1)), threads=cpu_count() * 2,
+                concatenate(outputs[i]).write_videofile(
+                    path.join(directory, 'FINAL-{}.MP4'.format(i + 1)), threads=threads_count,
                     preset=ffmpeg_preset)
             except AttributeError:
                 self.statusUpdate("oops! error:\n{}\nskipping".format(tc.format_exc()))
