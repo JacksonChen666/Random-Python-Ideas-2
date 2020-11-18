@@ -1,3 +1,4 @@
+"""This standalone program is discontinued. Please use web version at webapp.jacksonchen666.com or visit github repo JacksonChen666/TwitterLastInteractions."""
 import datetime
 import os
 import time
