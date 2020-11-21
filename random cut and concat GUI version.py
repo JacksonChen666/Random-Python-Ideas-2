@@ -197,7 +197,6 @@ class tkWin:
         self.window.lift()
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
             self.window.quit()
-            os.kill(t.ident, 15)
             if t.is_alive():
                 print("\nThread still running, some files may not be properly finished using.")
             else:
@@ -263,17 +262,26 @@ class tkWin:
 
                 length = round(uniform(float(minLength), float(maxLength)), 2)
                 start = round(uniform(0, duration - length), 2)
-                output.append((c, start, length))
+                output.append((c, start, start + length))
             outputs.append(output.copy())
             output.clear()
         self.statusUpdate("Writing {} video(s)...".format(str(amountOfVideos)))
         for i in range(len(outputs)):
-            try:
-                temp = [ffmpeg.input(c[0], ss=c[1], t=c[2]) for c in outputs[i]]
-                ffmpeg.concat(*temp).output(os.path.join(directory, f"FINAL-{i + 1}.MP4")).global_args("-loglevel", "warning").global_args("-stats").run()
-            except ffmpeg._run.Error as err:
-                print("Something failed. Check output of ffmpeg, or the error.")
-                print(str(err))
+            outPath = os.path.join(directory, f"FINAL-{i + 1}.MP4")
+            videoPath = os.path.join(directory, f"FINAL-{i + 1}-V.MP4")
+            audioPath = os.path.join(directory, f"FINAL-{i + 1}-A.MP3")
+            temp = [ffmpeg.input(c[0]).trim(start=c[1], end=c[2]).setpts('PTS-STARTPTS') for c in outputs[i]]
+            ffmpeg.concat(*temp).output(videoPath).overwrite_output().global_args("-an").global_args("-loglevel",
+                                                                                                     "warning").global_args(
+                "-stats").run()
+
+            temp2 = [ffmpeg.input(c[0]).filter('atrim', start=c[1], end=c[2]) for c in outputs[i]]
+            ffmpeg.concat(*temp2).output(audioPath).overwrite_output().global_args("-vn").run()
+
+            ffmpeg.concat(ffmpeg.input(videoPath), ffmpeg.input(audioPath), v=1, a=1).output(outPath).run()
+            # .global_args("-loglevel", "warning").global_args("-stats")
+            # os.remove(videoPath)
+            # os.remove(audioPath)
         self.statusUpdate("Done", True)
         self.changeButtons(False)
         self.folder_selected = ""
