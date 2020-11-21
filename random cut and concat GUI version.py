@@ -210,13 +210,10 @@ class tkWin:
         """
         Where the real magic happens.
         :param directory: Directory of videos.
-        :param xDim: Width of output videosEnt.
-        :param yDim: Height of output videosEnt.
         :param minLength: Shortest clip possible.
         :param maxLength: Longest clip possible.
         :param repeats: How many more times to reuse all the clips.
         :param discardedClipsPercent: percentage of how much clips to be discarded every loop.
-        :param ffmpeg_preset: FFmpeg compression preset (Refer to FFmpeg).
         :param amountOfVideos: Amount of different videos to make.
         :return: A Video.
         """
@@ -233,7 +230,7 @@ class tkWin:
                     break
         resolutions = Counter(resolutions)
         if len(resolutions) > 1:
-            values = list(map(lambda a: f"{a[0]}x{a[1]} ({resolutions[a]} videos)", resolutions.keys()))
+            values = list(map(lambda q: f"{q[0]}x{q[1]} ({resolutions[q]} videos)", resolutions.keys()))
             dlg = OptionDialog(self.window, 'Resolutions',
                                "Different resolutions of video detected.\nChoose resolution of the videos to keep.",
                                values)
