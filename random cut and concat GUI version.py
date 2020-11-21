@@ -296,7 +296,7 @@ class tkWin:
                             a.output(videoPath).overwrite_output().global_args('-loglevel', 'warning').run)
                         executor.submit(
                             temp[a].output(audioPath).overwrite_output().global_args('-loglevel', 'warning').run)
-                self.statusUpdate(f"Processing cuts for video {i}...", allowPrint=True)
+                self.statusUpdate(f"Processing {len(outputs[i]) * 2} cuts for video {i}...", allowPrint=True)
                 executor.shutdown()  # disallow submit and wait for all to complete
             self.statusUpdate(f"Finishing video {i}...", allowPrint=True)
             videoPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-V.MP4")
