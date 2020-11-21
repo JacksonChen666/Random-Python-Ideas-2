@@ -8,3 +8,4 @@ PyAutoGUI
 progress
 numpy
 tweepy
+ffmpeg
