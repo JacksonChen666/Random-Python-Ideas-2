@@ -9,6 +9,7 @@ from collections import Counter
 from os import listdir, path
 from random import randint, shuffle, uniform
 from tkinter import filedialog, messagebox
+from shutil import rmtree
 
 import ffmpeg
 
@@ -266,22 +267,34 @@ class tkWin:
             outputs.append(output.copy())
             output.clear()
         self.statusUpdate("Writing {} video(s)...".format(str(amountOfVideos)))
+        temp_dir = os.path.join(directory, "TEMP")
         for i in range(len(outputs)):
-            outPath = os.path.join(directory, f"FINAL-{i + 1}.MP4")
-            videoPath = os.path.join(directory, f"FINAL-{i + 1}-V.MP4")
-            audioPath = os.path.join(directory, f"FINAL-{i + 1}-A.MP3")
-            temp = [ffmpeg.input(c[0]).trim(start=c[1], end=c[2]).setpts('PTS-STARTPTS') for c in outputs[i]]
-            ffmpeg.concat(*temp).output(videoPath).overwrite_output().global_args("-an").global_args("-loglevel",
-                                                                                                     "warning").global_args(
-                "-stats").run()
-
-            temp2 = [ffmpeg.input(c[0]).filter('atrim', start=c[1], end=c[2]) for c in outputs[i]]
-            ffmpeg.concat(*temp2).output(audioPath).overwrite_output().global_args("-vn").run()
-
+            outPath = os.path.join(directory, f"FINAL-{i}.MP4")
+            paths = {}
+            try:
+                os.mkdir(temp_dir)
+            except FileExistsError:
+                rmtree(temp_dir)
+            for f in range(len(outputs[i])):
+                temp = {
+                    ffmpeg.input(c[0]).video.trim(start=c[1], end=c[2]).setpts('PTS-STARTPTS'):
+                        ffmpeg.input(c[0]).audio.filter('atrim', start=c[1], end=c[2]).filter('asetpts', 'PTS-STARTPTS')
+                    for c in outputs[i]
+                }
+                for s in range(len(temp.keys())):
+                    videoPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-{s}-V.MP4")
+                    audioPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-{s}-A.MP3")
+                    a = list(temp.keys())[s]
+                    temp_process = [a.output(videoPath), temp[a].output(audioPath)]
+                    ffmpeg.merge_outputs(*temp_process).overwrite_output().global_args('-loglevel', 'warning').global_args('-stats').run()
+                    paths[ffmpeg.input(videoPath)] = ffmpeg.input(audioPath)
+            videoPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-V.MP4")
+            audioPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-A.MP3")
+            ffmpeg.concat(*paths.keys()).output(videoPath).overwrite_output().run()
+            ffmpeg.concat(*paths.values()).output(audioPath).overwrite_output().run()
             ffmpeg.concat(ffmpeg.input(videoPath), ffmpeg.input(audioPath), v=1, a=1).output(outPath).run()
-            # .global_args("-loglevel", "warning").global_args("-stats")
-            # os.remove(videoPath)
-            # os.remove(audioPath)
+            rmtree(temp_dir)
+
         self.statusUpdate("Done", True)
         self.changeButtons(False)
         self.folder_selected = ""
