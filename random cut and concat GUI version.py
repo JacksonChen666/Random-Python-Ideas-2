@@ -4,10 +4,10 @@ This program takes a folder of videos, pick a random spot, and then just combine
 import logging
 import os
 import subprocess
-from concurrent import futures
 import threading
 import tkinter as tk
 from collections import Counter
+from concurrent import futures
 from multiprocessing import cpu_count
 from os import listdir, path
 from random import randint, shuffle, uniform
@@ -283,7 +283,8 @@ class tkWin:
                 for f in range(len(outputs[i])):
                     temp = {
                         ffmpeg.input(c[0]).video.trim(start=c[1], end=c[2]).setpts('PTS-STARTPTS'):
-                            ffmpeg.input(c[0]).audio.filter('atrim', start=c[1], end=c[2]).filter('asetpts', 'PTS-STARTPTS')
+                            ffmpeg.input(c[0]).audio.filter('atrim', start=c[1], end=c[2]).filter('asetpts',
+                                                                                                  'PTS-STARTPTS')
                         for c in outputs[i]
                     }
                     for s in range(len(temp.keys())):
@@ -293,7 +294,8 @@ class tkWin:
                         paths[ffmpeg.input(videoPath).video] = ffmpeg.input(audioPath).audio
                         executor.submit(
                             a.output(videoPath).overwrite_output().global_args('-loglevel', 'warning').run)
-                        executor.submit(temp[a].output(audioPath).overwrite_output().global_args('-loglevel', 'warning').run)
+                        executor.submit(
+                            temp[a].output(audioPath).overwrite_output().global_args('-loglevel', 'warning').run)
                 self.statusUpdate(f"Processing cuts for video {i}...", allowPrint=True)
                 executor.shutdown()  # disallow submit and wait for all to complete
             self.statusUpdate(f"Finishing video {i}...", allowPrint=True)
@@ -309,7 +311,7 @@ class tkWin:
                  f"{os.path.join(temp_dir, 'concat.txt')}",
                  f"{audioPath}"])
             ffmpeg.concat(*paths.keys()).output(videoPath).overwrite_output().global_args('-loglevel',
-                                                                                                  'warning').global_args(
+                                                                                          'warning').global_args(
                 '-stats').run()
             audio.wait()
             ffmpeg.concat(ffmpeg.input(videoPath).video, ffmpeg.input(audioPath).audio, v=1, a=1).output(
