@@ -279,7 +279,7 @@ class tkWin:
                 rmtree(temp_dir)
                 os.mkdir(temp_dir)
             os.chdir(temp_dir)
-            with futures.ThreadPoolExecutor(max_workers=cpu_count()) as executor:
+            with futures.ProcessPoolExecutor(max_workers=cpu_count()) as executor:
                 for f in range(len(outputs[i])):
                     temp = {
                         ffmpeg.input(c[0]).video.trim(start=c[1], end=c[2]).setpts('PTS-STARTPTS'):
