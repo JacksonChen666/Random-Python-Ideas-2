@@ -3,6 +3,7 @@ This program takes a folder of videos, pick a random spot, and then just combine
 """
 import logging
 import os
+import subprocess
 import threading
 import tkinter as tk
 from collections import Counter
@@ -218,7 +219,7 @@ class tkWin:
         :return: A Video.
         """
         # compile list of videos
-        videoFormats = ('.mp4', '.mkv', '.webm', '.mov', '.flv', '.avi', '.m4a', '.m4v', '.f4v', '.f4a')
+        videoFormats = ('.mp4', '.mkv', '.webm', '.mov', '.flv', '.avi')
         clips = [path.join(directory, f) for f in listdir(directory) if f.endswith(videoFormats) and
                  path.isfile(path.join(directory, f)) and "FINAL-" not in f]
         probes = {clip: ffmpeg.probe(clip) for clip in clips}
@@ -275,26 +276,37 @@ class tkWin:
                 os.mkdir(temp_dir)
             except FileExistsError:
                 rmtree(temp_dir)
+                os.mkdir(temp_dir)
             for f in range(len(outputs[i])):
                 temp = {
                     ffmpeg.input(c[0]).video.trim(start=c[1], end=c[2]).setpts('PTS-STARTPTS'):
-                        ffmpeg.input(c[0]).audio.filter('atrim', start=c[1], end=c[2]).filter('asetpts', 'PTS-STARTPTS')
+                        ffmpeg.input(c[0]).audio.filter('atrim', start=c[1], end=c[2])#.filter('asetpts', 'PTS-STARTPTS')
                     for c in outputs[i]
                 }
                 for s in range(len(temp.keys())):
                     videoPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-{s}-V.MP4")
                     audioPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-{s}-A.MP3")
                     a = list(temp.keys())[s]
-                    temp_process = [a.output(videoPath), temp[a].output(audioPath)]
-                    ffmpeg.merge_outputs(*temp_process).overwrite_output().global_args('-loglevel', 'warning').global_args('-stats').run()
-                    paths[ffmpeg.input(videoPath)] = ffmpeg.input(audioPath)
+                    video = a.output(videoPath).overwrite_output().global_args('-loglevel', 'warning').global_args('-stats').run_async()
+                    audio = temp[a].output(audioPath).overwrite_output().global_args('-loglevel', 'warning').global_args('-stats').run_async()
+                    paths[ffmpeg.input(videoPath).video] = ffmpeg.input(audioPath).audio
+                    video.wait()
+                    audio.wait()
             videoPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-V.MP4")
             audioPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-A.MP3")
-            ffmpeg.concat(*paths.keys()).output(videoPath).overwrite_output().run()
-            ffmpeg.concat(*paths.values()).output(audioPath).overwrite_output().run()
-            ffmpeg.concat(ffmpeg.input(videoPath), ffmpeg.input(audioPath), v=1, a=1).output(outPath).run()
-            rmtree(temp_dir)
-
+            audios = sorted([os.path.abspath(i) for i in os.listdir(temp_dir) if i.startswith("FINAL-TEMP-0") and i.endswith("-A.MP3")])
+            with open(os.path.join(temp_dir, "concat.txt"), "w") as f:
+                for a in audios:
+                    f.write(f"file '{a}'\n")
+            cmd = ["ffmpeg", f"-f concat -safe 0 -i 'concat.txt' '{audioPath}'"]
+            with open(os.path.join(temp_dir, "COMMAND.txt"), "w") as f:
+                f.write(" ".join(cmd))
+            audio = subprocess.Popen(cmd)
+            video = ffmpeg.concat(*paths.keys()).output(videoPath).overwrite_output().run_async()
+            video.wait()
+            audio.wait()
+            ffmpeg.concat(ffmpeg.input(videoPath).video, ffmpeg.input(audioPath).audio, v=1, a=1).output(outPath).run()
+            # rmtree(temp_dir)
         self.statusUpdate("Done", True)
         self.changeButtons(False)
         self.folder_selected = ""
