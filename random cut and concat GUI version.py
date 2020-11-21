@@ -9,8 +9,8 @@ import tkinter as tk
 from collections import Counter
 from os import listdir, path
 from random import randint, shuffle, uniform
-from tkinter import filedialog, messagebox
 from shutil import rmtree
+from tkinter import filedialog, messagebox
 
 import ffmpeg
 
@@ -277,36 +277,41 @@ class tkWin:
             except FileExistsError:
                 rmtree(temp_dir)
                 os.mkdir(temp_dir)
+            os.chdir(temp_dir)
             for f in range(len(outputs[i])):
                 temp = {
                     ffmpeg.input(c[0]).video.trim(start=c[1], end=c[2]).setpts('PTS-STARTPTS'):
-                        ffmpeg.input(c[0]).audio.filter('atrim', start=c[1], end=c[2])#.filter('asetpts', 'PTS-STARTPTS')
+                        ffmpeg.input(c[0]).audio.filter('atrim', start=c[1], end=c[2])
+                    # .filter('asetpts', 'PTS-STARTPTS')
                     for c in outputs[i]
                 }
                 for s in range(len(temp.keys())):
                     videoPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-{s}-V.MP4")
                     audioPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-{s}-A.MP3")
                     a = list(temp.keys())[s]
-                    video = a.output(videoPath).overwrite_output().global_args('-loglevel', 'warning').global_args('-stats').run_async()
-                    audio = temp[a].output(audioPath).overwrite_output().global_args('-loglevel', 'warning').global_args('-stats').run_async()
+                    video = a.output(videoPath).overwrite_output().global_args('-loglevel', 'warning').global_args(
+                        '-stats').run_async()
+                    audio = temp[a].output(audioPath).overwrite_output().global_args('-loglevel',
+                                                                                     'warning').global_args(
+                        '-stats').run_async()
                     paths[ffmpeg.input(videoPath).video] = ffmpeg.input(audioPath).audio
                     video.wait()
                     audio.wait()
             videoPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-V.MP4")
             audioPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-A.MP3")
-            audios = sorted([os.path.abspath(i) for i in os.listdir(temp_dir) if i.startswith("FINAL-TEMP-0") and i.endswith("-A.MP3")])
+            audios = sorted([os.path.abspath(i) for i in os.listdir(temp_dir) if
+                             i.startswith("FINAL-TEMP-0") and i.endswith("-A.MP3")])
             with open(os.path.join(temp_dir, "concat.txt"), "w") as f:
                 for a in audios:
                     f.write(f"file '{a}'\n")
-            cmd = ["ffmpeg", f"-f concat -safe 0 -i 'concat.txt' '{audioPath}'"]
-            with open(os.path.join(temp_dir, "COMMAND.txt"), "w") as f:
-                f.write(" ".join(cmd))
-            audio = subprocess.Popen(cmd)
+            audio = subprocess.Popen(
+                ["ffmpeg", "-f", "concat", "-safe", "0", "-i", f"{os.path.join(temp_dir, 'concat.txt')}",
+                 f"{audioPath}"])
             video = ffmpeg.concat(*paths.keys()).output(videoPath).overwrite_output().run_async()
             video.wait()
             audio.wait()
             ffmpeg.concat(ffmpeg.input(videoPath).video, ffmpeg.input(audioPath).audio, v=1, a=1).output(outPath).run()
-            # rmtree(temp_dir)
+            rmtree(temp_dir)
         self.statusUpdate("Done", True)
         self.changeButtons(False)
         self.folder_selected = ""
