@@ -235,10 +235,10 @@ class tkWin:
                                "Different resolutions of video detected.\nChoose resolution of the videos to keep.",
                                values)
             width, height = map(lambda q: int(q), dlg.result.partition(" ")[0].split("x"))
-            values = probes.values()
-            keys = probes.keys()
+            keys = list(probes.keys())
+            values = list(probes.values())
             clips = []
-            for probe in value:
+            for probe in values:
                 for stream in probe["streams"]:
                     if stream["codec_type"] == "video" and stream["width"] == width and stream["height"] == height:
                         clips.append(keys[values.index(probe)])
@@ -276,6 +276,8 @@ class tkWin:
                 os.mkdir(temp_dir)
             os.chdir(temp_dir)
             with futures.ProcessPoolExecutor(max_workers=cpu_count()) as executor:
+                total = 0
+                self.statusUpdate(f"Submitting tasks...", allowPrint=True)
                 for f in range(len(outputs[i])):
                     temp = {
                         ffmpeg.input(c[0]).video.trim(start=c[1], end=c[2]).setpts('PTS-STARTPTS'):
@@ -289,10 +291,11 @@ class tkWin:
                         a = list(temp.keys())[s]
                         paths[ffmpeg.input(videoPath).video] = ffmpeg.input(audioPath).audio
                         executor.submit(
-                            a.output(videoPath).overwrite_output().global_args('-loglevel', 'warning').run)
+                            a.output(videoPath).overwrite_output().global_args('-loglevel', 'warning').global_args('-stats').run)
                         executor.submit(
-                            temp[a].output(audioPath).overwrite_output().global_args('-loglevel', 'warning').run)
-                self.statusUpdate(f"Processing {len(outputs[i]) * 2} cuts for video {i}...", allowPrint=True)
+                            temp[a].output(audioPath).overwrite_output().global_args('-loglevel', 'warning').global_args('-stats').run)
+                        total += 2
+                self.statusUpdate(f"Processing {total} cuts for video {i}...", allowPrint=True)
                 executor.shutdown()  # disallow submit and wait for all to complete
             self.statusUpdate(f"Finishing video {i}...", allowPrint=True)
             videoPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-V.MP4")
