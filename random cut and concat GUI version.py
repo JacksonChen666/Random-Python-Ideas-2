@@ -234,12 +234,11 @@ class tkWin:
             dlg = OptionDialog(self.window, 'Resolutions',
                                "Different resolutions of video detected.\nChoose resolution of the videos to keep.",
                                values)
-            width, height = dlg.result.partition(" ")[0].split("x")
-            width, height = int(width), int(height)
-            values = list(probes.values())
-            keys = list(probes.keys())
+            width, height = map(lambda q: int(q), dlg.result.partition(" ")[0].split("x"))
+            values = probes.values()
+            keys = probes.keys()
             clips = []
-            for probe in probes.values():
+            for probe in value:
                 for stream in probe["streams"]:
                     if stream["codec_type"] == "video" and stream["width"] == width and stream["height"] == height:
                         clips.append(keys[values.index(probe)])
@@ -256,14 +255,14 @@ class tkWin:
 
         output, outputs = [], []
         self.statusUpdate("Cutting...")
-        for v in inputs:
-            for c in v:
-                logging.info("\rCutting {}".format(c))
-                duration = float(ffmpeg.probe(c)["format"]["duration"])
+        for video in inputs:
+            for cut in video:
+                logging.info("\rCutting {}".format(cut))
+                duration = float(ffmpeg.probe(cut)["format"]["duration"])
 
                 length = round(uniform(float(minLength), float(maxLength)), 2)
                 start = round(uniform(0, duration - length), 2)
-                output.append((c, start, start + length))
+                output.append((cut, start, start + length))
             outputs.append(output.copy())
             output.clear()
         temp_dir = os.path.join(directory, "TEMP")
