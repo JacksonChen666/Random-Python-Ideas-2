@@ -3,6 +3,7 @@ This program takes a folder of videos, pick a random spot, and then just combine
 """
 import logging
 import os
+import random
 import subprocess
 import threading
 import tkinter as tk
@@ -79,6 +80,7 @@ class tkWin:
         self.varStatus = tk.StringVar(self.window, value="Waiting for folder to be selected...")
         self.varDiscard = tk.IntVar(self.window, value=20)
         self.varVideos = tk.IntVar(self.window, value=1)
+        self.varToSeconds = tk.IntVar(self.window, value=0)
 
         # Stuff
         self.minLenLbl = tk.Label(self.window, text="Min Clip Length:")
@@ -92,6 +94,9 @@ class tkWin:
 
         self.repeatsLbl = tk.Label(self.window, text="Repeat thru list times:")
         self.repeatsEnt = tk.Entry(self.window, textvariable=self.varRepeats)
+
+        self.toSecondsLbl = tk.Label(self.window, text="Make video seconds long:")
+        self.toSecondsEnt = tk.Entry(self.window, textvariable=self.varToSeconds)
 
         self.videosLbl = tk.Label(self.window, text="Amount of different videos:")
         self.videosEnt = tk.Entry(self.window, textvariable=self.varVideos)
@@ -115,14 +120,17 @@ class tkWin:
         self.repeatsLbl.grid(row=7, column=0, pady=3, sticky="e")
         self.repeatsEnt.grid(row=7, column=1, pady=3, sticky="nesw")
 
-        self.videosLbl.grid(row=8, column=0, pady=3, sticky="e")
-        self.videosEnt.grid(row=8, column=1, pady=3, sticky="nesw")
+        self.toSecondsLbl.grid(row=8, column=0, pady=3, sticky="e")
+        self.toSecondsEnt.grid(row=8, column=1, pady=3, sticky="nesw")
 
-        self.status.grid(row=9, column=0, columnspan=2, pady=3)
+        self.videosLbl.grid(row=9, column=0, pady=3, sticky="e")
+        self.videosEnt.grid(row=9, column=1, pady=3, sticky="nesw")
 
-        self.chsFldBtn.grid(row=10, column=0, pady=3, padx=3, columnspan=2, sticky="nesw")
+        self.status.grid(row=10, column=0, columnspan=2, pady=3)
 
-        self.stopBtn.grid(row=11, column=0, pady=3, padx=3, columnspan=2, sticky="nesw")
+        self.chsFldBtn.grid(row=11, column=0, pady=3, padx=3, columnspan=2, sticky="nesw")
+
+        self.stopBtn.grid(row=12, column=0, pady=3, padx=3, columnspan=2, sticky="nesw")
 
         # don't quit yet
         self.window.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -153,6 +161,7 @@ class tkWin:
         try:  # validate the nums
             float(self.varMinLen.get())
             float(self.varMaxLen.get())
+            float(self.varToSeconds.get())
             int(self.varRepeats.get())
             int(self.varDiscard.get())
             int(self.varVideos.get())
@@ -173,7 +182,7 @@ class tkWin:
 
         t = threading.Thread(target=self.processing, args=(
             self.folder_selected, self.minLenEnt.get(), self.maxLenEnt.get(), self.repeatsEnt.get(),
-            self.varDiscard.get(), self.varVideos.get()), daemon=True)
+            self.varDiscard.get(), self.varVideos.get(), self.varToSeconds.get()), daemon=True)
         t.start()
         return True
 
@@ -188,6 +197,7 @@ class tkWin:
         self.maxLenEnt.config(state=isDisabled)
         self.repeatsEnt.config(state=isDisabled)
         self.chsFldBtn.config(state=isDisabled)
+        self.toSecondsEnt.config(state=isDisabled)
         self.discardEnt.config(state=isDisabled)
         self.videosEnt.config(state=isDisabled)
         return
@@ -206,7 +216,7 @@ class tkWin:
             else:
                 print("\nThread not running.")
 
-    def processing(self, directory, minLength, maxLength, repeats, discardedClipsPercent, amountOfVideos):
+    def processing(self, directory, minLength, maxLength, repeats, discardedClipsPercent, amountOfVideos, toTime=0):
         """
         Where the real magic happens.
         :param directory: Directory of videos.
@@ -215,9 +225,19 @@ class tkWin:
         :param repeats: How many more times to reuse all the clips.
         :param discardedClipsPercent: percentage of how much clips to be discarded every loop.
         :param amountOfVideos: Amount of different videos to make.
+        :param toTime: Amount of seconds of video to make
         :return: A Video.
         """
+
+        def cutClip(filename, minLen=minLength, maxLen=maxLength):
+            logging.info("\rCutting {}".format(filename))
+            duration = float(probes[filename]["format"]["duration"])
+            length = round(uniform(float(minLen), float(maxLen)), 2)
+            start = round(uniform(0, duration - length), 2)
+            return filename, start, start + length
+
         # compile list of videos
+        maxLength, toTime = int(maxLength), float(toTime)
         videoFormats = ('.mp4', '.mkv', '.webm', '.mov', '.flv', '.avi')
         clips = [path.join(directory, f) for f in listdir(directory) if f.endswith(videoFormats) and
                  path.isfile(path.join(directory, f)) and "FINAL-" not in f]
@@ -237,34 +257,33 @@ class tkWin:
             width, height = map(lambda q: int(q), dlg.result.partition(" ")[0].split("x"))
             keys = list(probes.keys())
             values = list(probes.values())
-            clips = []
-            for probe in values:
-                for stream in probe["streams"]:
-                    if stream["codec_type"] == "video" and stream["width"] == width and stream["height"] == height:
-                        clips.append(keys[values.index(probe)])
-                        break
-        logging.debug("Clips: {}".format(clips))
-        inputs = []
-        for i in range(amountOfVideos):
-            tempInputs = [q for i in range(int(repeats)) for q in clips if randint(0, 100) >= float(
-                discardedClipsPercent)]  # randomly selects from original full list
-            shuffle(tempInputs)
-            inputs.append(tempInputs.copy())
-        logging.debug("Randomly selected clips: {}".format(inputs))
-        self.changeButtons(True)
+            clips = [keys[values.index(probe)] for probe in values for stream in probe["streams"] if
+                     stream["codec_type"] == "video" and stream["width"] == width and stream["height"] == height]
 
+        logging.debug("Clips: {}".format(clips))
         output, outputs = [], []
         self.statusUpdate("Cutting...")
-        for video in inputs:
-            for cut in video:
-                logging.info("\rCutting {}".format(cut))
-                duration = float(ffmpeg.probe(cut)["format"]["duration"])
-
-                length = round(uniform(float(minLength), float(maxLength)), 2)
-                start = round(uniform(0, duration - length), 2)
-                output.append((cut, start, start + length))
+        for i in range(amountOfVideos):
+            if toTime <= 0:
+                for a in range(int(repeats)):
+                    for clip in clips:
+                        if randint(0, 100) >= float(discardedClipsPercent):
+                            outputs.append(cutClip(clip))
+            else:
+                totalTime = 0
+                while toTime > totalTime:
+                    clip = random.choice(clips)
+                    timeLeft = toTime - totalTime
+                    _maxLength = maxLength if timeLeft > maxLength else timeLeft
+                    clip, start, startAndLength = cutClip(clip, maxLen=_maxLength)
+                    totalTime += startAndLength - start
+                    output.append((clip, start, startAndLength))
+            shuffle(output)
             outputs.append(output.copy())
             output.clear()
+        shuffle(outputs)
+        logging.debug(f"Cuts: {outputs}")
+
         temp_dir = os.path.join(directory, "TEMP")
         for i in range(len(outputs)):
             outPath = os.path.join(directory, f"FINAL-{i}.MP4")
@@ -291,9 +310,12 @@ class tkWin:
                         a = list(temp.keys())[s]
                         paths[ffmpeg.input(videoPath).video] = ffmpeg.input(audioPath).audio
                         executor.submit(
-                            a.output(videoPath).overwrite_output().global_args('-loglevel', 'warning').global_args('-stats').run)
+                            a.output(videoPath).overwrite_output().global_args('-loglevel', 'warning').global_args(
+                                '-stats').run)
                         executor.submit(
-                            temp[a].output(audioPath).overwrite_output().global_args('-loglevel', 'warning').global_args('-stats').run)
+                            temp[a].output(audioPath).overwrite_output().global_args('-loglevel',
+                                                                                     'warning').global_args(
+                                '-stats').run)
                         total += 2
                 self.statusUpdate(f"Processing {total} cuts for video {i}...", allowPrint=True)
                 executor.shutdown()  # disallow submit and wait for all to complete
