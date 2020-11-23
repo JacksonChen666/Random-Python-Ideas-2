@@ -4,7 +4,7 @@ This program takes a folder of videos, pick a random spot, and then just combine
 import logging
 import os
 import random
-import subprocess
+import re
 import threading
 import tkinter as tk
 from collections import Counter
@@ -237,6 +237,7 @@ class tkWin:
             return filename, start, start + length
 
         # compile list of videos
+        self.changeButtons(True)
         maxLength, toTime = int(maxLength), float(toTime)
         videoFormats = ('.mp4', '.mkv', '.webm', '.mov', '.flv', '.avi')
         clips = [path.join(directory, f) for f in listdir(directory) if f.endswith(videoFormats) and
@@ -326,9 +327,9 @@ class tkWin:
                              i.startswith("FINAL-TEMP-0") and i.endswith("-A.MP3")])
             with open(os.path.join(temp_dir, "concat.txt"), "w") as f:
                 for a in audios:
-                    f.write(f'file "{a}"\n')
-            audio = ffmpeg.input(os.path.join(temp_dir, 'concat.txt'), format="concat").overwrite_output().global_args('-loglevel', 'warning').global_args('-stats').global_args(
-                '-safe', '0').output(audioPath).run_async()
+                    f.write(f'file {re.escape(a)}\n')
+            audio = ffmpeg.input(os.path.join(temp_dir, 'concat.txt'), format="concat", safe = "0").output(
+                audioPath).overwrite_output().global_args('-loglevel', 'warning').global_args('-stats').run_async()
             ffmpeg.concat(*paths.keys()).output(videoPath).overwrite_output().global_args('-loglevel',
                                                                                           'warning').global_args(
                 '-stats').run()
