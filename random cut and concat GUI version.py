@@ -326,11 +326,9 @@ class tkWin:
                              i.startswith("FINAL-TEMP-0") and i.endswith("-A.MP3")])
             with open(os.path.join(temp_dir, "concat.txt"), "w") as f:
                 for a in audios:
-                    f.write(f"file '{a}'\n")
-            audio = subprocess.Popen(
-                ["ffmpeg", "-f", "concat", "-safe", "0", "-loglevel", "warning", "-stats", "-i",
-                 f"{os.path.join(temp_dir, 'concat.txt')}",
-                 f"{audioPath}"])
+                    f.write(f'file "{a}"\n')
+            audio = ffmpeg.input(os.path.join(temp_dir, 'concat.txt'), format="concat").overwrite_output().global_args('-loglevel', 'warning').global_args('-stats').global_args(
+                '-safe', '0').output(audioPath).run_async()
             ffmpeg.concat(*paths.keys()).output(videoPath).overwrite_output().global_args('-loglevel',
                                                                                           'warning').global_args(
                 '-stats').run()
