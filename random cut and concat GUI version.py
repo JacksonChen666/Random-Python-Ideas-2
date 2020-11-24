@@ -4,12 +4,10 @@ This program takes a folder of videos, pick a random spot, and then just combine
 import logging
 import os
 import random
-import re
 import threading
 import tkinter as tk
 from collections import Counter
 from concurrent import futures
-from multiprocessing import cpu_count
 from os import listdir, path
 from random import randint, shuffle, uniform
 from shutil import rmtree
@@ -287,53 +285,30 @@ class tkWin:
 
         temp_dir = os.path.join(directory, "TEMP")
         for i in range(len(outputs)):
-            outPath = os.path.join(directory, f"FINAL-{i}.MP4")
-            paths = {}
             try:
                 os.mkdir(temp_dir)
             except FileExistsError:
                 rmtree(temp_dir)
                 os.mkdir(temp_dir)
             os.chdir(temp_dir)
-            with futures.ProcessPoolExecutor(max_workers=cpu_count()) as executor:
-                total = 0
-                self.statusUpdate(f"Submitting tasks...", allowPrint=True)
-                for f in range(len(outputs[i])):
-                    temp = {
-                        ffmpeg.input(c[0]).video.trim(start=c[1], end=c[2]).setpts('PTS-STARTPTS'):
-                            ffmpeg.input(c[0]).audio.filter('atrim', start=c[1], end=c[2]).filter('asetpts',
-                                                                                                  'PTS-STARTPTS')
-                        for c in outputs[i]
-                    }
-                    for s in range(len(temp.keys())):
-                        videoPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-{s}-V.MP4")
-                        audioPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-{s}-A.MP3")
-                        a = list(temp.keys())[s]
-                        paths[ffmpeg.input(videoPath).video] = ffmpeg.input(audioPath).audio
-                        executor.submit(
-                            a.output(videoPath).overwrite_output().global_args('-loglevel', 'warning').global_args(
-                                '-stats').run)
-                        executor.submit(
-                            temp[a].output(audioPath).overwrite_output().global_args('-loglevel',
-                                                                                     'warning').global_args(
-                                '-stats').run)
-                        total += 2
-                self.statusUpdate(f"Processing {total} cuts for video {i}...", allowPrint=True)
-                executor.shutdown()  # disallow submit and wait for all to complete
+            outPath = os.path.join(directory, f"FINAL-{i}.MP4")
+            videos = {}
+            audios = []
+            with futures.ProcessPoolExecutor(max_workers=os.cpu_count() // 2) as executor:
+                count = 0
+                for c in outputs[i]:
+                    video = ffmpeg.input(c[0], ss=c[1], to=c[2])
+                    audioPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-{count}-A.MP3")
+                    executor.submit(video.audio.output(audioPath).overwrite_output().run)
+                    audios.append(audioPath)
+                    videos[video] = c
+                    count += 1
+                executor.shutdown()
             self.statusUpdate(f"Finishing video {i}...", allowPrint=True)
             videoPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-V.MP4")
             audioPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-A.MP3")
-            audios = sorted([os.path.abspath(i) for i in os.listdir(temp_dir) if
-                             i.startswith("FINAL-TEMP-0") and i.endswith("-A.MP3")])
-            with open(os.path.join(temp_dir, "concat.txt"), "w") as f:
-                for a in audios:
-                    f.write(f'file {re.escape(a)}\n')
-            audio = ffmpeg.input(os.path.join(temp_dir, 'concat.txt'), format="concat", safe = "0").output(
-                audioPath).overwrite_output().global_args('-loglevel', 'warning').global_args('-stats').run_async()
-            ffmpeg.concat(*paths.keys()).output(videoPath).overwrite_output().global_args('-loglevel',
-                                                                                          'warning').global_args(
-                '-stats').run()
-            audio.wait()
+            ffmpeg.concat(*videos.keys()).output(videoPath).overwrite_output().run()
+            ffmpeg.input(f'concat:{"|".join(audios)}').output(audioPath).overwrite_output().run()
             ffmpeg.concat(ffmpeg.input(videoPath).video, ffmpeg.input(audioPath).audio, v=1, a=1).output(
                 outPath).overwrite_output().global_args('-loglevel', 'warning').global_args('-stats').run()
             rmtree(temp_dir)
