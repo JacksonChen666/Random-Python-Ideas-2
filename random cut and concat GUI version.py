@@ -313,18 +313,17 @@ class tkWin:
                     videos[video] = _audioPath
                     count += 1
                 self.statusUpdate(f"Processing {count} tasks...", allowPrint=True)
-                video = ffmpeg.concat(*videos.keys()).output(videoPath).overwrite_output().global_args('-loglevel',
-                                                                                                       'warning').global_args(
+                # video processing
+                video = ffmpeg.concat(*videos.keys()).output(videoPath, vsync="2").overwrite_output().global_args('-loglevel',
+                                                                                                      'warning').global_args(
                     '-stats').run_async()
                 executor.shutdown()
             self.statusUpdate(f"Finishing video {i}...", allowPrint=True)
             self.statusUpdate("Processing Video and Audio", allowPrint=True)
-            ffmpeg.input(f'concat:{"|".join(videos.values())}').output(audioPath, vsync=2,
-                                                                       r=maxFPS).overwrite_output().global_args(
+            ffmpeg.input(f'concat:{"|".join(videos.values())}').output(audioPath).overwrite_output().global_args(
                 '-loglevel', 'warning').global_args('-stats').run()
             video.wait()
             # https://www.reddit.com/r/learnpython/comments/ey41dp/merging_video_and_audio_using_ffmpegpython/fgf1oyq
-            # ?utm_source=share&utm_medium=web2x&context=3
             ffmpeg.output(ffmpeg.input(videoPath), ffmpeg.input(audioPath), outPath,
                           c="copy").overwrite_output().global_args('-loglevel', 'warning').global_args('-stats').run()
             rmtree(temp_dir)
