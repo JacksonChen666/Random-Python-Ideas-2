@@ -271,7 +271,7 @@ class tkWin:
                 for a in range(int(repeats)):
                     for clip in clips:
                         if randint(0, 100) >= float(discardedClipsPercent):
-                            outputs.append(cutClip(clip))
+                            output.append(cutClip(clip))
             else:
                 totalTime = 0
                 while toTime > totalTime:
