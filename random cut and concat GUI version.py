@@ -293,31 +293,34 @@ class tkWin:
             os.chdir(temp_dir)
             outPath = os.path.join(directory, f"FINAL-{i}.MP4")
             videos = {}
-            audios = []
             with futures.ProcessPoolExecutor(max_workers=os.cpu_count() // 2) as executor:
                 count = 0
+                self.statusUpdate("Submitting tasks...", allowPrint=True)
                 for c in outputs[i]:
                     video = ffmpeg.input(c[0], ss=c[1], to=c[2])
-                    audioPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-{count}-A.MP3")
+                    audioPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-{count}-A.AAC")
                     executor.submit(video.audio.output(audioPath).overwrite_output().global_args('-loglevel',
                                                                                                  'warning').global_args(
                         '-stats').run)
-                    audios.append(audioPath)
-                    videos[video] = c
+                    videos[video] = audioPath
                     count += 1
+                self.statusUpdate(f"Processing {count} tasks...", allowPrint=True)
                 executor.shutdown()
             self.statusUpdate(f"Finishing video {i}...", allowPrint=True)
             videoPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-V.MP4")
-            audioPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-A.MP3")
+            audioPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-A.AAC")
             video = ffmpeg.concat(*videos.keys()).output(videoPath).overwrite_output().global_args('-loglevel',
                                                                                                    'warning').global_args(
                 '-stats').run_async()
-            ffmpeg.input(f'concat:{"|".join(audios)}').output(audioPath).overwrite_output().global_args('-loglevel',
-                                                                                                        'warning').global_args(
-                '-stats').run()
+            self.statusUpdate("Processing Video and Audio", allowPrint=True)
+            ffmpeg.input(f'concat:{"|".join(videos.values())}').output(audioPath).overwrite_output().global_args(
+                '-loglevel', 'warning').global_args('-stats').run()
+            self.statusUpdate("Processing Video", allowPrint=True)
             video.wait()
-            ffmpeg.concat(ffmpeg.input(videoPath).video, ffmpeg.input(audioPath).audio, v=1, a=1).output(
-                outPath).overwrite_output().global_args('-loglevel', 'warning').global_args('-stats').run()
+            # https://www.reddit.com/r/learnpython/comments/ey41dp/merging_video_and_audio_using_ffmpegpython/fgf1oyq?utm_source=share&utm_medium=web2x&context=3
+            ffmpeg.output(ffmpeg.input(videoPath), ffmpeg.input(audioPath), outPath,
+                          acodec="copy").overwrite_output().global_args('-loglevel', 'warning').global_args(
+                '-stats').run()
             rmtree(temp_dir)
         self.statusUpdate("Done", True)
         self.changeButtons(False)
