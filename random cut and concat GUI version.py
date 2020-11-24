@@ -236,7 +236,7 @@ class tkWin:
 
         # compile list of videos
         self.changeButtons(True)
-        maxLength, toTime = int(maxLength), float(toTime)
+        maxLength, toTime = float(maxLength), float(toTime)
         videoFormats = ('.mp4', '.mkv', '.webm', '.mov', '.flv', '.avi')
         clips = [path.join(directory, f) for f in listdir(directory) if f.endswith(videoFormats) and
                  path.isfile(path.join(directory, f)) and "FINAL-" not in f]
@@ -319,8 +319,7 @@ class tkWin:
             video.wait()
             # https://www.reddit.com/r/learnpython/comments/ey41dp/merging_video_and_audio_using_ffmpegpython/fgf1oyq?utm_source=share&utm_medium=web2x&context=3
             ffmpeg.output(ffmpeg.input(videoPath), ffmpeg.input(audioPath), outPath,
-                          acodec="copy").overwrite_output().global_args('-loglevel', 'warning').global_args(
-                '-stats').run()
+                          c="copy").overwrite_output().global_args('-loglevel', 'warning').global_args('-stats').run()
             rmtree(temp_dir)
         self.statusUpdate("Done", True)
         self.changeButtons(False)
