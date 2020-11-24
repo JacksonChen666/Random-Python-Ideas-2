@@ -236,7 +236,7 @@ class tkWin:
 
         # compile list of videos
         self.changeButtons(True)
-        maxLength, toTime = float(maxLength), float(toTime)
+        minLength, maxLength, toTime = float(minLength), float(maxLength), float(toTime)
         videoFormats = ('.mp4', '.mkv', '.webm', '.mov', '.flv', '.avi')
         clips = [path.join(directory, f) for f in listdir(directory) if f.endswith(videoFormats) and
                  path.isfile(path.join(directory, f)) and "FINAL-" not in f]
@@ -274,6 +274,8 @@ class tkWin:
                     clip = random.choice(clips)
                     timeLeft = toTime - totalTime
                     _maxLength = maxLength if timeLeft > maxLength else timeLeft
+                    if minLength > _maxLength:  # stop. going under the minimum length shouldn't be allowed.
+                        break
                     clip, start, startAndLength = cutClip(clip, maxLen=_maxLength)
                     totalTime += startAndLength - start
                     output.append((clip, start, startAndLength))
