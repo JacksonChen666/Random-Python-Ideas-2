@@ -242,10 +242,14 @@ class tkWin:
                  path.isfile(path.join(directory, f)) and "FINAL-" not in f]
         probes = {clip: ffmpeg.probe(clip) for clip in clips}
         resolutions = []
+        maxFPS = 0
         for probe in probes.values():
             for i in probe["streams"]:
                 if i["codec_type"] == "video":
                     resolutions.append((i["width"], i["height"]))
+                    fps = round(eval(i["avg_frame_rate"], {}, {}), 2)
+                    if fps > maxFPS:
+                        maxFPS = fps
                     break
         resolutions = Counter(resolutions)
         if len(resolutions) > 1:
@@ -295,31 +299,32 @@ class tkWin:
             os.chdir(temp_dir)
             outPath = os.path.join(directory, f"FINAL-{i}.MP4")
             videos = {}
+            videoPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-V.MP4")
+            audioPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-A.AAC")
             with futures.ProcessPoolExecutor(max_workers=os.cpu_count() // 2) as executor:
                 count = 0
                 self.statusUpdate("Submitting tasks...", allowPrint=True)
                 for c in outputs[i]:
                     video = ffmpeg.input(c[0], ss=c[1], to=c[2])
-                    audioPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-{count}-A.AAC")
-                    executor.submit(video.audio.output(audioPath).overwrite_output().global_args('-loglevel',
-                                                                                                 'warning').global_args(
+                    _audioPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-{count}-A.AAC")
+                    executor.submit(video.audio.output(_audioPath).overwrite_output().global_args('-loglevel',
+                                                                                                  'warning').global_args(
                         '-stats').run)
-                    videos[video] = audioPath
+                    videos[video] = _audioPath
                     count += 1
                 self.statusUpdate(f"Processing {count} tasks...", allowPrint=True)
+                video = ffmpeg.concat(*videos.keys()).output(videoPath).overwrite_output().global_args('-loglevel',
+                                                                                                       'warning').global_args(
+                    '-stats').run_async()
                 executor.shutdown()
             self.statusUpdate(f"Finishing video {i}...", allowPrint=True)
-            videoPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-V.MP4")
-            audioPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-A.AAC")
-            video = ffmpeg.concat(*videos.keys()).output(videoPath).overwrite_output().global_args('-loglevel',
-                                                                                                   'warning').global_args(
-                '-stats').run_async()
             self.statusUpdate("Processing Video and Audio", allowPrint=True)
-            ffmpeg.input(f'concat:{"|".join(videos.values())}').output(audioPath).overwrite_output().global_args(
+            ffmpeg.input(f'concat:{"|".join(videos.values())}').output(audioPath, vsync=2,
+                                                                       r=maxFPS).overwrite_output().global_args(
                 '-loglevel', 'warning').global_args('-stats').run()
-            self.statusUpdate("Processing Video", allowPrint=True)
             video.wait()
-            # https://www.reddit.com/r/learnpython/comments/ey41dp/merging_video_and_audio_using_ffmpegpython/fgf1oyq?utm_source=share&utm_medium=web2x&context=3
+            # https://www.reddit.com/r/learnpython/comments/ey41dp/merging_video_and_audio_using_ffmpegpython/fgf1oyq
+            # ?utm_source=share&utm_medium=web2x&context=3
             ffmpeg.output(ffmpeg.input(videoPath), ffmpeg.input(audioPath), outPath,
                           c="copy").overwrite_output().global_args('-loglevel', 'warning').global_args('-stats').run()
             rmtree(temp_dir)
