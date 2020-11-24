@@ -299,7 +299,9 @@ class tkWin:
                 for c in outputs[i]:
                     video = ffmpeg.input(c[0], ss=c[1], to=c[2])
                     audioPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-{count}-A.MP3")
-                    executor.submit(video.audio.output(audioPath).overwrite_output().run)
+                    executor.submit(video.audio.output(audioPath).overwrite_output().global_args('-loglevel',
+                                                                                                 'warning').global_args(
+                        '-stats').run)
                     audios.append(audioPath)
                     videos[video] = c
                     count += 1
@@ -307,8 +309,13 @@ class tkWin:
             self.statusUpdate(f"Finishing video {i}...", allowPrint=True)
             videoPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-V.MP4")
             audioPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-A.MP3")
-            ffmpeg.concat(*videos.keys()).output(videoPath).overwrite_output().run()
-            ffmpeg.input(f'concat:{"|".join(audios)}').output(audioPath).overwrite_output().run()
+            video = ffmpeg.concat(*videos.keys()).output(videoPath).overwrite_output().global_args('-loglevel',
+                                                                                                   'warning').global_args(
+                '-stats').run_async()
+            ffmpeg.input(f'concat:{"|".join(audios)}').output(audioPath).overwrite_output().global_args('-loglevel',
+                                                                                                        'warning').global_args(
+                '-stats').run()
+            video.wait()
             ffmpeg.concat(ffmpeg.input(videoPath).video, ffmpeg.input(audioPath).audio, v=1, a=1).output(
                 outPath).overwrite_output().global_args('-loglevel', 'warning').global_args('-stats').run()
             rmtree(temp_dir)
