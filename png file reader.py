@@ -20,11 +20,10 @@ class PNG:
     def _getIHDRChunk(self):
         with open(self._filename, "rb") as f:
             f.seek(8)
-            length = int(f.read(4).hex(), 16)
-            chunkType = f.read(4)
-            chunkData = f.read(length)
-            CRCValue = f.read(4)
-            print(chunkType, chunkData, CRCValue, length)
+            self.IHDRChunkLength = int(f.read(4).hex(), 16)
+            self.IHDRChunkType = f.read(4)
+            self.IHDRChunkData = f.read(self.IHDRChunkLength)
+            self.IHDRChunkCRCValue = int(f.read(4).hex(), 16)
 
 
 if __name__ == '__main__':
