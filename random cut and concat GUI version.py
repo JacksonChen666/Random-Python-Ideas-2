@@ -1,6 +1,7 @@
 """
 This program takes a folder of videos, pick a random spot, and then just combine it into a videosEnt and done
 """
+# TODO fix audio getting out of sync
 import logging
 import os
 import random
@@ -307,16 +308,15 @@ class tkWin:
                 for c in outputs[i]:
                     video = ffmpeg.input(c[0], ss=c[1], to=c[2])
                     _audioPath = os.path.join(temp_dir, f"FINAL-TEMP-{i}-{count}-A.AAC")
-                    executor.submit(video.audio.output(_audioPath).overwrite_output().global_args('-loglevel',
-                                                                                                  'warning').global_args(
+                    executor.submit(video.audio.output(_audioPath, vsync=2).overwrite_output().global_args('-loglevel',
+                                                                                                           'warning').global_args(
                         '-stats').run)
                     videos[video] = _audioPath
                     count += 1
                 self.statusUpdate(f"Processing {count} tasks...", allowPrint=True)
                 # video processing
-                video = ffmpeg.concat(*videos.keys()).output(videoPath, vsync="2").overwrite_output().global_args('-loglevel',
-                                                                                                      'warning').global_args(
-                    '-stats').run_async()
+                video = ffmpeg.concat(*videos.keys()).output(videoPath).overwrite_output().global_args(
+                    '-loglevel', 'warning').global_args('-stats').run_async()
                 executor.shutdown()
             self.statusUpdate(f"Finishing video {i}...", allowPrint=True)
             self.statusUpdate("Processing Video and Audio", allowPrint=True)
@@ -325,7 +325,7 @@ class tkWin:
             video.wait()
             # https://www.reddit.com/r/learnpython/comments/ey41dp/merging_video_and_audio_using_ffmpegpython/fgf1oyq
             ffmpeg.output(ffmpeg.input(videoPath), ffmpeg.input(audioPath), outPath,
-                          c="copy").overwrite_output().global_args('-loglevel', 'warning').global_args('-stats').run()
+                          f="aresample").overwrite_output().global_args('-loglevel', 'warning').global_args('-stats').run()
             rmtree(temp_dir)
         self.statusUpdate("Done", True)
         self.changeButtons(False)
